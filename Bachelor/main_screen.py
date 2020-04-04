@@ -10,8 +10,9 @@ import normal_measure_screen
 global root, device, running_flag
 
 class MainScreen:
-    def __init__(self, root):
+    def __init__(self, root, dropdown):
         self.root = root
+        self.dropdown = dropdown
         global device, connection_state_label, running_flag
         device = None
         connection_state_label = None
@@ -79,7 +80,7 @@ class MainScreen:
 
         connection_state_label = Label(self.root, text="Connection State: Not Connected")
         connect_button = Button(self.root, text="Connect to Device", width=20, height=2, command=self.connect_device)
-        start_measure_button = Button(self.root, text="Start Measurement", width=20, height=2)
+        start_measure_button = Button(self.root, text="Start Measurement", width=20, height=2, command=self.startMeasure)
         exit_button = Button(self.root, text="Exit", command=self.close, width=20, height=2)
 
         image_label = Label(self.root, image=image[0], width=760, height=380)
@@ -99,10 +100,13 @@ class MainScreen:
         #mainloop()
 
     def startMeasure(self):
-        nMS = normal_measure_screen.NormalMeasureScreen(root, device, 10, 10)
-        super.createMeasureScreenVar()
-        super.deleteCurrentLayout(root)
+        print("HI")
+        self.deleteCurrentLayout(self.root)
+        nMS = normal_measure_screen.NormalMeasureScreen(self.root, device, self.dropdown, 10, 10)
         nMS.show()
 
+    def deleteCurrentLayout(self, layout):
+        for obj in layout.winfo_children():
+            obj.destroy()
 
 

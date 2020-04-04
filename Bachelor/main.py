@@ -26,13 +26,13 @@ exportScreen = export_screen.ExportScreen(root)
 
 dropdown = tk.Menu(menu, tearoff=0)
 dropdown.add_command(label="Open File", command=lambda: open_file_function())
-dropdown.add_command(label="Save File", command=lambda: saveMeasureData(), state=tk.DISABLED)         #um menüpunkt zu deaktivieren state=tk.DISABLED
+dropdown.add_command(label="Save File", state=tk.DISABLED)         #um menüpunkt zu deaktivieren state=tk.DISABLED
 dropdown.add_command(label="Import Database", command=lambda: print("hi"))
 
 menu.add_cascade(label="File", menu=dropdown)
 root.config(menu=menu)
 
-mainScreen = main_screen.MainScreen(frame)
+mainScreen = main_screen.MainScreen(frame, dropdown)
 
 frame.pack()
 
@@ -82,6 +82,12 @@ def open_file_function():
 
     canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
 
+
+s = dropdown.index("end")
+#dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=lambda: print("Hi"))
+
+for i in range(s+1):
+    print(dropdown.entrycget(i, "label"))
 
 
 """

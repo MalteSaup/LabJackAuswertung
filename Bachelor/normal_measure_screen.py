@@ -3,17 +3,20 @@ from time import perf_counter
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation
 import pandas as pd
-
-global device, resolution_x, resolution_y
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
 class NormalMeasureScreen:
-    global device, resolution_x, resolution_y
-    def __init__(self, root, device, resolution_x=10, resolution_y=10):
+
+    def __init__(self, root, device, dropdown,resolution_x=10, resolution_y=10):
         self.device = device
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.root = root
+        self.dropdown = dropdown
 
+        self.dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=lambda: print("Hi"))
     """
     def clock(ratehz):
         start_time = perf_counter()
@@ -32,42 +35,81 @@ class NormalMeasureScreen:
         plt.style.use("dark_background")
         plt.grid(True)
 
-
+        print("WUW")
 
         x = []
         y = []
 
-        global count, oldtime, stopped, df_set
+        global count, oldtime, stopped, df_set, fig, ax
+
+        fig, ax = plt.subplots()
+
         count = 0
         oldtime = 0
         stopped = False
         df_set = False
+
+
+        #ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
+
+        canvas = FigureCanvasTkAgg(fig, master=self.root)
+        canvas.get_tk_widget().pack()
+
         def animate(i):
 
-            global df_set, count, oldtime
+            global df_set, count, oldtime, fig, ax
             if not stopped:
+                """
+                a, df = createSampleData()
 
-                y.append(device.getAIN(0) / 10 - 1)
-                print(device.getAIN(2))
-                #print(perf_counter()- oldtime)
-                oldtime = perf_counter()
+                plt.style.use("dark_background")
+                plt.rcParams['toolbar'] = "None"
+
+                fig = Figure()
+
+                fig.add_subplot().plot(a[0], a[1], linestyle="none", marker=".", markersize=0.8)
+
+                canvas = FigureCanvasTkAgg(fig, master=frame)
+
+                # print(canvas.get_width_height())
+
+                
+
+                frame.pack(side=tk.RIGHT)
+                
+                fig, ax, df = open_file.open_file()
+
+                deleteCurrentLayout(frame)
+                canvas = FigureCanvasTkAgg(fig, master=frame)
+
+                canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
+                
+                
+                
+                
+                """
+
                 x.append(count)
-                count += 0.1
+                y.append(self.device.getAIN(0) / 10 - 1)
+                #print(perf_counter()- oldtime)
+                #oldtime = perf_counter()
 
-                plt.cla()
-                plt.grid(True, color="#444", alpha=0.5, linestyle="--")
-                plt.ylim([0-resolution_y/2, 0+resolution_y/2])
+                count += 0.1
+                print(count)
+                ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
+                #plt.grid(True, color="#444", alpha=0.5, linestyle="--")
+                #plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
 
                 #plt.rcParams['toolbar'] = "None"
                 if count > 10:
-                    plt.xlim([count-resolution_x, count])
+                    ax.set_xlim([count-self.resolution_x, count])
                 else:
-                    plt.xlim([0, resolution_x])
+                    ax.set_xlim([0, self.resolution_x])
 
                 if df_set:
                     df_set = False
 
-                plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
+                #plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
             elif not df_set:
                 global df, fig
                 fig, ax = plt.subplots()
@@ -77,8 +119,10 @@ class NormalMeasureScreen:
                 })
                 df_set = True
 
+        FuncAnimation(fig, animate, interval=100)
+
         def getData():
             return fig, df
 
-        ani = FuncAnimation(plt.gcf(), animate, interval=100)
-        plt.show()
+
+        #plt.show()

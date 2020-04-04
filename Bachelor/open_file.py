@@ -21,7 +21,6 @@ def createDrawableArr(arr_df, df, add=0):
     arr_y = []
     sizes = int(len(arr_df[0]) / 2)
 
-    print(sizes)
     for i in range(sizes):
         arr_x.append([])
         arr_y.append([])
@@ -30,9 +29,6 @@ def createDrawableArr(arr_df, df, add=0):
         for i in range(sizes):
             arr_x[i].append(obj[add + i*2])
             arr_y[i].append(sympy.sympify(obj[add + i*2+1]))
-    print(arr_x)
-    print("-----")
-    print(arr_y)
     return arr_x, arr_y, df
 
 def open_file():
