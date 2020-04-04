@@ -6,8 +6,12 @@ from matplotlib.figure import Figure
 import pandas as pd
 
 import export_screen
+import open_file
+import transistor
+import main_screen
+import normal_measure_screen
 
-global device, root, df
+global device, root, df, fig, measureScreen
 device = None
 root = tk.Tk()
 # root.geometry("935x480")
@@ -21,22 +25,32 @@ menu = tk.Menu()
 exportScreen = export_screen.ExportScreen(root)
 
 dropdown = tk.Menu(menu, tearoff=0)
-dropdown.add_command(label="Open File", command=lambda: open_file())
-dropdown.add_command(label="Save File", command=lambda: exportScreen.show_export_screen(fig, df))         #um menüpunkt zu deaktivieren state=tk.DISABLED
+dropdown.add_command(label="Open File", command=lambda: open_file_function())
+dropdown.add_command(label="Save File", command=lambda: saveMeasureData(), state=tk.DISABLED)         #um menüpunkt zu deaktivieren state=tk.DISABLED
 dropdown.add_command(label="Import Database", command=lambda: print("hi"))
-
-"""
-mainScreen = main_screen.MainScreen(root)
-mainScreen.show()
-transistor_screen = transistor.TransistorShow(root)
-canvas = transistor_screen.show()
-exportScreen = export_screen.ExportScreen(root)
-
-"""
-#dropdown.entryconfig("Save File", state=tk.NORMAL)         um deaktivierten Punkt wieder zu aktivieren
 
 menu.add_cascade(label="File", menu=dropdown)
 root.config(menu=menu)
+
+mainScreen = main_screen.MainScreen(frame)
+
+frame.pack()
+
+mainScreen.show()
+#transistor_screen = transistor.TransistorShow(root)
+#canvas = transistor_screen.show()
+exportScreen = export_screen.ExportScreen(root)
+
+
+#dropdown.entryconfig("Save File", state=tk.NORMAL)         um deaktivierten Punkt wieder zu aktivieren
+
+def createMeasureScreenVar(mS):
+    print("NUR")
+    global measureScreen
+    measureScreen = mS
+
+def saveMeasureData():
+    exportScreen.show_export_screen(measureScreen.getData())
 
 def createSampleData():
     arr_x = []
@@ -52,70 +66,25 @@ def createSampleData():
         "x2": arr_x,
         "y2": arr_y[1]
     })
-    return [arr_x, arr_y[1]], df
+    return [arr_x, arr_y[0]], df
 
 def deleteCurrentLayout(layout, is_root=False):
     for obj in layout.winfo_children():
         if str(obj) != ".!menu" or not is_root:
             obj.destroy()
 
-def openDataFile(path):
+def open_file_function():
     global df
-    filetype = path[-3:]
-    if(filetype == "lsx"):
-        df = pd.read_excel(path)
-        arr_df = df.to_numpy()
-        return createDrawableArr(arr_df, True)
-    if(filetype == "csv"):
-        df = pd.read_csv(path, sep=",|;", engine="python")
-        arr_df = df.to_numpy()
-        return createDrawableArr(arr_df)
-
-def createDrawableArr(arr_df, is_excel=False):
-    #print(arr_df)
-    arr_x = []
-    arr_y = []
-    sizes = int(len(arr_df[0]) / 2)
-    if is_excel:
-        add = 1
-    else:
-        add = 0
-    #print(sizes)
-    for i in range(sizes):
-        arr_x.append([])
-        arr_y.append([])
-
-    for obj in arr_df:
-        for i in range(sizes):
-            #print(sympy.sympify(add + obj[i*2+1]))
-            arr_x[i].append(obj[add + i*2])
-            arr_y[i].append(sympy.sympify(add + obj[i*2+1]))
-    print(arr_y)
-    return arr_x, arr_y
-
-def open_file():
-    arr_df = df.to_numpy()
-    path = tk.filedialog.askopenfilename(initialdir="./", title="Open File", filetypes=(
-                                        ("Excel Spreadsheet (.xlsx)", "*.xlsx"), ("CSV Spreadsheet", "*.csv"), ("Any File", "*.*")))
-
-    filetype = path[-4:]
-    print(filetype + " " + path)
-
-    arr_x, arr_y = openDataFile(path)
-
-    fig, ax = plt.subplots()
-    print(" A A " + str(len(arr_x)))
-    #for i in range(len(arr_x)):
-     #   ax.plot(arr_x[0], arr_y[0], label="i"+str(i))
-
-    ax.plot(arr_x[0], arr_y[0])
+    fig, ax, df = open_file.open_file()
 
     deleteCurrentLayout(frame)
     canvas = FigureCanvasTkAgg(fig, master=frame)
+
     canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
 
 
 
+"""
 a, df = createSampleData()
 
 plt.style.use("dark_background")
@@ -134,7 +103,7 @@ canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
 
 frame.pack(side=tk.RIGHT)
 
-
+"""
 #deleteCurrentLayout()
 """             so kann man sachen löschen aus dem screen ohne zu wissen wie die namen sind. wichtig später ;-)
 

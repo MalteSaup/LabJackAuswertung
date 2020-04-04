@@ -3,6 +3,9 @@ from tkinter import *
 from PIL import ImageTk, Image
 import u6
 import threading
+import time
+
+import normal_measure_screen
 
 global root, device, running_flag
 
@@ -19,9 +22,9 @@ class MainScreen:
         try:
             device = u6.U6()
             device.getCalibrationData()
-            connection_state_label = Label(root, text="Connection State: Connection Completed")
+            connection_state_label = Label(self.root, text="Connection State: Connection Completed")
             running_flag = True
-            check_connection_state_loop()
+            self.check_connection_state_loop()
         except:
             connection_state_label.grid_remove()
             connection_state_label = Label(self.root, text="Connection State: Connection Failed")
@@ -42,8 +45,8 @@ class MainScreen:
                     connection_state_label.grid(sticky=SW, row=11, column=0, columnspan=2, pady=10)
 
 
-        t = threading.Thread(target=check)
-        t.start()
+        #t = threading.Thread(target=lambda: check(self))
+        #t.start()
 
     def close(self):
         global root, running_flag
@@ -57,10 +60,9 @@ class MainScreen:
             "Experiment 3",
             "Experiment 4"
         ]
-        #global image_orig, image, image_label, height_old, width_old
+        global image_orig, image, image_label
         image_orig = [Image.open("./Dioden_Messschaltung.png")]
         image = [ImageTk.PhotoImage(image_orig[0].resize((760, 380), Image.ANTIALIAS))]
-
 
 
 #        plt.style.use("dark_background")
@@ -77,12 +79,14 @@ class MainScreen:
 
         connection_state_label = Label(self.root, text="Connection State: Not Connected")
         connect_button = Button(self.root, text="Connect to Device", width=20, height=2, command=self.connect_device)
+        start_measure_button = Button(self.root, text="Start Measurement", width=20, height=2)
         exit_button = Button(self.root, text="Exit", command=self.close, width=20, height=2)
 
         image_label = Label(self.root, image=image[0], width=760, height=380)
 
         connect_button.grid(row=0, column=0, pady=5, padx=5)
         dropdown_experiment.grid(row=1, column=0, pady=5, padx=5)
+        start_measure_button.grid(row=2, column=0, pady=5, padx=5)
         exit_button.grid(row=9, column=0, pady=5, padx=5)
         connection_state_label.grid(sticky=SW, row=11, column=0, columnspan=2, pady=10)
 
@@ -92,4 +96,13 @@ class MainScreen:
         self.root.rowconfigure(1, weight=2)
         self.root.columnconfigure(1, weight=2)
 
-        mainloop()
+        #mainloop()
+
+    def startMeasure(self):
+        nMS = normal_measure_screen.NormalMeasureScreen(root, device, 10, 10)
+        super.createMeasureScreenVar()
+        super.deleteCurrentLayout(root)
+        nMS.show()
+
+
+
