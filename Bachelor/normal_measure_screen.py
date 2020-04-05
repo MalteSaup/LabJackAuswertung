@@ -6,6 +6,9 @@ import pandas as pd
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import threading
+import time
+import export_screen
 
 class NormalMeasureScreen:
 
@@ -16,7 +19,10 @@ class NormalMeasureScreen:
         self.root = root
         self.dropdown = dropdown
 
-        self.dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=lambda: print("Hi"))
+        self.dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=self.init_save)
+
+        self.exportScreen = export_screen.ExportScreen(self.root)
+
     """
     def clock(ratehz):
         start_time = perf_counter()
@@ -30,6 +36,26 @@ class NormalMeasureScreen:
     et = perf_counter()
     print(str((et - st)))
     """
+
+    def init_save(self):
+        global stopped, df
+        stopped = True
+        thread = threading.Thread(target=self.check_for_dfset)
+        thread.start()
+
+    def check_for_dfset(self):
+        global df_set
+        time.sleep(0.2)
+        print("_____-----_____")
+        if df_set:
+            global fig, df, stopped
+            self.exportScreen.show_export_screen(fig, df)
+            stopped = False
+            df_set = True
+            return df_set
+        else:
+            return self.check_for_dfset(self)
+
     def show(self):
         plt.rcParams['toolbar'] = "None"
         plt.style.use("dark_background")
@@ -96,6 +122,8 @@ class NormalMeasureScreen:
 
                 count += 0.1
                 print(count)
+                ax.clear()
+                ax.set_ylim([-5,5])
                 ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
                 #plt.grid(True, color="#444", alpha=0.5, linestyle="--")
                 #plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
@@ -112,15 +140,14 @@ class NormalMeasureScreen:
                 #plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
             elif not df_set:
                 global df, fig
-                fig, ax = plt.subplots()
                 df = pd.DataFrame({
                     "x0": x,
                     "y0": y
                 })
                 df_set = True
 
-        FuncAnimation(fig, animate, interval=100)
-
+        ani = FuncAnimation(fig, animate, interval=100)
+        ani._start()
         def getData():
             return fig, df
 

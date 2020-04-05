@@ -25,13 +25,13 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
         if datatype == ".png" or datatype == ".jpg" or datatype == ".pdf":
             fig.savefig(path)
         elif datatype == ".csv":
-            if(df.get("x1").size <= samplecount or samplecount == 0):
+            if(df.get("x0").size <= samplecount or samplecount == 0):
                 df.to_csv(r""+path, index=False)
             else:
                 uebergabe_df = sample_down(df, samplecount)
                 uebergabe_df.to_csv(r""+path, index=False)
         elif datatype == ".xlsx":
-            if (df.get("x1").size <= samplecount or samplecount == 0):
+            if (df.get("x0").size <= samplecount or samplecount == 0):
                 df.to_excel(path)
             else:
                 uebergabe_df = sample_down(df, samplecount)
