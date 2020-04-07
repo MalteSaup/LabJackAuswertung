@@ -32,7 +32,7 @@ dropdown.add_command(label="Import Database", command=lambda: print("hi"))
 menu.add_cascade(label="File", menu=dropdown)
 root.config(menu=menu)
 
-mainScreen = main_screen.MainScreen(frame, dropdown)
+mainScreen = main_screen.MainScreen(frame, dropdown, root)
 
 frame.pack()
 

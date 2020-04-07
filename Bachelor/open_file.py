@@ -8,18 +8,27 @@ def openDataFile(path):
     filetype = path[-3:]
     if(filetype == "lsx"):
         df = pd.read_excel(path)
+        col = df.columns
+        print(col)
         arr_df = df.to_numpy()
-        return createDrawableArr(arr_df, df, 1)
+        return createDrawableArr(arr_df, df)
     if(filetype == "csv"):
         df = pd.read_csv(path, sep=",|;", engine="python")
         arr_df = df.to_numpy()
         return createDrawableArr(arr_df, df)
 
-def createDrawableArr(arr_df, df, add=0):
+def createDrawableArr(arr_df, df):
     #print(arr_df)
     arr_x = []
     arr_y = []
     sizes = int(len(arr_df[0]) / 2)
+
+    add = 0
+
+    for col in df.columns:
+        print(col)
+        if("Unnamed" in col):
+            add = 1
 
     for i in range(sizes):
         arr_x.append([])

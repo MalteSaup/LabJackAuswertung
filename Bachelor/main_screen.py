@@ -10,9 +10,10 @@ import normal_measure_screen
 global root, device, running_flag
 
 class MainScreen:
-    def __init__(self, root, dropdown):
+    def __init__(self, root, dropdown, real_root):
         self.root = root
         self.dropdown = dropdown
+        self.real_root = real_root
         global device, connection_state_label, running_flag
         device = None
         connection_state_label = None
@@ -102,7 +103,7 @@ class MainScreen:
     def startMeasure(self):
         print("HI")
         self.deleteCurrentLayout(self.root)
-        nMS = normal_measure_screen.NormalMeasureScreen(self.root, device, self.dropdown, 10, 10)
+        nMS = normal_measure_screen.NormalMeasureScreen(self.root, device, self.dropdown, self.real_root, 10, 10)
         nMS.show()
 
     def deleteCurrentLayout(self, layout):

@@ -12,7 +12,7 @@ import export_screen
 
 class NormalMeasureScreen:
 
-    def __init__(self, root, device, dropdown,resolution_x=10, resolution_y=10):
+    def __init__(self, root, device, dropdown, real_root,resolution_x=10, resolution_y=10):
         self.device = device
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
@@ -22,6 +22,7 @@ class NormalMeasureScreen:
         self.dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=self.init_save)
 
         self.exportScreen = export_screen.ExportScreen(self.root)
+        real_root.protocol("WM_DELETE_WINDOW", self.callback)
 
     """
     def clock(ratehz):
@@ -36,6 +37,11 @@ class NormalMeasureScreen:
     et = perf_counter()
     print(str((et - st)))
     """
+
+    def callback(self):
+        global fig
+        plt.close()
+        self.root.quit()
 
     def init_save(self):
         global stopped, df
