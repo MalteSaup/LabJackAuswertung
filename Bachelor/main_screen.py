@@ -10,61 +10,51 @@ import normal_measure_screen
 global root, device, running_flag
 
 class MainScreen:
-    def __init__(self, root, dropdown, real_root):
+    def __init__(self, root, dropdown, support_class):
         self.root = root
         self.dropdown = dropdown
-        self.real_root = real_root
-        global device, connection_state_label, running_flag
-        device = None
-        connection_state_label = None
-        running_flag = False
+        self.support_class = support_class
+
+        self.connection_state_label = None
+
+    def callback(self):
+        self.support_class.running_flag = False
+        self.support_class.root.destroy()
 
     def connect_device(self):
-        global connection_state_label, running_flag, device
+        global device, connection_state_label, running_flag
         try:
-            device = u6.U6()
-            device.getCalibrationData()
-            connection_state_label = Label(self.root, text="Connection State: Connection Completed")
-            running_flag = True
-            self.check_connection_state_loop()
+            self.support_class.device = u6.U6()
+            self.support_class.device.getCalibrationData()
+
+            self.connection_state_label = Label(self.root, text="Connection State: Connection Completed")
+            self.support_class.check_connection_state_loop()
         except:
-            connection_state_label.grid_remove()
-            connection_state_label = Label(self.root, text="Connection State: Connection Failed")
+            print(self.connection_state_label)
+            if self.connection_state_label is not None:
+                self.connection_state_label.grid_remove()
+            self.connection_state_label = Label(self.root, text="Connection State: Connection Failed")
 
-        connection_state_label.grid(sticky=SW, row=11, column=0, columnspan=2, pady=10)
-
-    def check_connection_state_loop(self):
-        def check(self):
-            global device, connection_state_label, running_flag
-            while running_flag:
-                time.sleep(0.5)
-                try:
-                    print(device.getAIN(0))
-                except:
-                    running_flag = False
-                    connection_state_label.grid_remove()
-                    connection_state_label = Label(self.root, text="Connection State: Connection Lost")
-                    connection_state_label.grid(sticky=SW, row=11, column=0, columnspan=2, pady=10)
+        self.connection_state_label.grid(sticky=SW, row=11, column=0, columnspan=2, pady=10)
 
 
-        #t = threading.Thread(target=lambda: check(self))
-        #t.start()
 
     def close(self):
-        global root, running_flag
+        global running_flag
         running_flag = False
         self.root.quit()
 
     def show(self):
+        self.support_class.root.protocol("WM_DELETE_WINDOW", self.callback)
+
         options = [
             "Experiment 1",
             "Experiment 2",
             "Experiment 3",
             "Experiment 4"
         ]
-        global image_orig, image, image_label
-        image_orig = [Image.open("./Dioden_Messschaltung.png")]
-        image = [ImageTk.PhotoImage(image_orig[0].resize((760, 380), Image.ANTIALIAS))]
+        self.image_orig = [Image.open("./Dioden_Messschaltung.png")]
+        self.image = [ImageTk.PhotoImage(self.image_orig[0].resize((760, 380), Image.ANTIALIAS))]
 
 
 #        plt.style.use("dark_background")
@@ -84,7 +74,7 @@ class MainScreen:
         start_measure_button = Button(self.root, text="Start Measurement", width=20, height=2, command=self.startMeasure)
         exit_button = Button(self.root, text="Exit", command=self.close, width=20, height=2)
 
-        image_label = Label(self.root, image=image[0], width=760, height=380)
+        image_label = Label(self.root, image=self.image[0], width=760, height=380)
 
         connect_button.grid(row=0, column=0, pady=5, padx=5)
         dropdown_experiment.grid(row=1, column=0, pady=5, padx=5)
@@ -101,13 +91,7 @@ class MainScreen:
         #mainloop()
 
     def startMeasure(self):
-        print("HI")
-        self.deleteCurrentLayout(self.root)
-        nMS = normal_measure_screen.NormalMeasureScreen(self.root, device, self.dropdown, self.real_root, 10, 10)
-        nMS.show()
+        self.support_class.showNMS(10, 10)
 
-    def deleteCurrentLayout(self, layout):
-        for obj in layout.winfo_children():
-            obj.destroy()
 
 

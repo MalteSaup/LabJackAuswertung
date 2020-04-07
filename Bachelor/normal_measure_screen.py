@@ -12,17 +12,20 @@ import export_screen
 
 class NormalMeasureScreen:
 
-    def __init__(self, root, device, dropdown, real_root,resolution_x=10, resolution_y=10):
+    def __init__(self, root, device, dropdown, support_class, resolution_x=10, resolution_y=10):
         self.device = device
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
         self.root = root
         self.dropdown = dropdown
+        self.support_class = support_class
+
+        self.ani = None
 
         self.dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=self.init_save)
 
-        self.exportScreen = export_screen.ExportScreen(self.root)
-        real_root.protocol("WM_DELETE_WINDOW", self.callback)
+        self.exportScreen = self.support_class.exportScreen
+
 
     """
     def clock(ratehz):
@@ -39,9 +42,20 @@ class NormalMeasureScreen:
     """
 
     def callback(self):
-        global fig
+        global ax, fig
+        print("IIFF")
+
+        ax.clear()
+        fig.clear()
+
         plt.close()
-        self.root.quit()
+        self.ani.event_source.stop()
+
+
+        self.support_class.running_flag = False
+        self.support_class.root.destroy()
+        exit(666)       #nötig da sonst skript unendlich weiter läuft todo fehlersuche
+
 
     def init_save(self):
         global stopped, df
@@ -63,9 +77,12 @@ class NormalMeasureScreen:
             return self.check_for_dfset(self)
 
     def show(self):
+        self.support_class.root.protocol("WM_DELETE_WINDOW", self.callback)
+
         plt.rcParams['toolbar'] = "None"
         plt.style.use("dark_background")
         plt.grid(True)
+        #plt.block(False)
 
         print("WUW")
 
@@ -81,7 +98,6 @@ class NormalMeasureScreen:
         stopped = False
         df_set = False
 
-
         #ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
 
         canvas = FigureCanvasTkAgg(fig, master=self.root)
@@ -90,6 +106,7 @@ class NormalMeasureScreen:
         def animate(i):
 
             global df_set, count, oldtime, fig, ax
+
             if not stopped:
                 """
                 a, df = createSampleData()
@@ -127,7 +144,7 @@ class NormalMeasureScreen:
                 #oldtime = perf_counter()
 
                 count += 0.1
-                print(count)
+                print("count" + str(count))
                 ax.clear()
                 ax.set_ylim([-5,5])
                 ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
@@ -152,8 +169,8 @@ class NormalMeasureScreen:
                 })
                 df_set = True
 
-        ani = FuncAnimation(fig, animate, interval=100)
-        ani._start()
+        self.ani = FuncAnimation(fig, animate, interval=100)
+        self.ani.event_source.start()
         def getData():
             return fig, df
 

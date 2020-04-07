@@ -7,6 +7,7 @@ import pandas as pd
 
 import export_screen
 import open_file
+import support_class
 import transistor
 import main_screen
 import normal_measure_screen
@@ -18,39 +19,32 @@ root = tk.Tk()
 root.title("HAW LabJack")
 root.iconbitmap('icon.ico')
 
-frame = tk.Frame(root)
+container = tk.Frame(root)
 
 menu = tk.Menu()
 
-exportScreen = export_screen.ExportScreen(root)
-
 dropdown = tk.Menu(menu, tearoff=0)
+
 dropdown.add_command(label="Open File", command=lambda: open_file_function())
 dropdown.add_command(label="Save File", state=tk.DISABLED)         #um menüpunkt zu deaktivieren state=tk.DISABLED
 dropdown.add_command(label="Import Database", command=lambda: print("hi"))
 
 menu.add_cascade(label="File", menu=dropdown)
+
 root.config(menu=menu)
 
-mainScreen = main_screen.MainScreen(frame, dropdown, root)
+container.pack()
 
-frame.pack()
+supportClass = support_class.SupportClass(root, device, container, dropdown)
 
-mainScreen.show()
-#transistor_screen = transistor.TransistorShow(root)
-#canvas = transistor_screen.show()
-exportScreen = export_screen.ExportScreen(root)
+supportClass.createExportScreen()
 
+supportClass.showMS()
 
 #dropdown.entryconfig("Save File", state=tk.NORMAL)         um deaktivierten Punkt wieder zu aktivieren
 
-def createMeasureScreenVar(mS):
-    print("NUR")
-    global measureScreen
-    measureScreen = mS
-
 def saveMeasureData():
-    exportScreen.show_export_screen(measureScreen.getData())
+    supportClass.exportScreen.show_export_screen(supportClass.measureScreen.getData())
 
 def createSampleData():
     arr_x = []
@@ -68,26 +62,23 @@ def createSampleData():
     })
     return [arr_x, arr_y[0]], df
 
-def deleteCurrentLayout(layout, is_root=False):
-    for obj in layout.winfo_children():
-        if str(obj) != ".!menu" or not is_root:
-            obj.destroy()
-
 def open_file_function():
     global df
     fig, ax, df = open_file.open_file()
 
-    deleteCurrentLayout(frame)
-    canvas = FigureCanvasTkAgg(fig, master=frame)
+    supportClass.deleteCurrentLayout(container)
+    canvas = FigureCanvasTkAgg(fig, master=container)
 
     canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
 
+tk.mainloop()
 
-s = dropdown.index("end")
+
+
 #dropdown.entryconfigure("Save File", state=tk.ACTIVE, command=lambda: print("Hi"))
 
-for i in range(s+1):
-    print(dropdown.entrycget(i, "label"))
+#for i in range(s+1):
+#    print(dropdown.entrycget(i, "label"))
 
 
 """
@@ -116,7 +107,6 @@ frame.pack(side=tk.RIGHT)
 
 root.winfo_children()[1].destroy()
 """
-tk.mainloop()
 
 """
 def a(e):
