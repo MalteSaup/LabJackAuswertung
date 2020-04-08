@@ -26,6 +26,10 @@ class NormalMeasureScreen:
 
         self.exportScreen = self.support_class.exportScreen
 
+        self.checkboxes = []
+        self.checkbox_container = tk.Frame(self.support_class.root)
+
+
 
     """
     def clock(ratehz):
@@ -89,7 +93,14 @@ class NormalMeasureScreen:
         x = []
         y = []
 
-        global count, oldtime, stopped, df_set, fig, ax
+        global count, oldtime, stopped, df_set, fig, ax, vars
+
+        colors = [
+            "#00ff00",
+            "#ff0000",
+            "#0000ff",
+            "#ffffff"
+        ]
 
         fig, ax = plt.subplots()
 
@@ -100,12 +111,27 @@ class NormalMeasureScreen:
 
         #ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
 
+        #------------------------------------
+
+        vars = []
+
+        for i in range(4):
+            vars.append(tk.IntVar())
+            #if(i == 0):
+            vars[i].set(1)
+            self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="AIN" + str(i), variable=vars[i]))
+            self.checkboxes[i].pack()
+            y.append([])
+        #------------------------------------
+        self.checkbox_container.pack()
         canvas = FigureCanvasTkAgg(fig, master=self.root)
         canvas.get_tk_widget().pack()
 
         def animate(i):
 
             global df_set, count, oldtime, fig, ax
+
+
 
             if not stopped:
                 """
@@ -138,16 +164,27 @@ class NormalMeasureScreen:
                 
                 """
 
+                ax.clear()
                 x.append(count)
-                y.append(self.device.getAIN(0) / 10 - 1)
+                uebergabe = self.device.readRegister(0, numReg=26)
+                print(len(uebergabe))
+                for j in range(len(vars)):
+                    #print(str(j) + " " + str(y[j]))
+
+
+                    if vars[j].get() == 1:
+                        #print(colors[j])
+                        y[j].append(uebergabe[j*2] / 10 )
+                        ax.set_ylim([-10, 15])
+                        ax.plot(x, y[j], linestyle="-", marker="None", color=colors[j])
+
+                    else:
+                        y[j].append(None)
                 #print(perf_counter()- oldtime)
                 #oldtime = perf_counter()
 
                 count += 0.1
-                print("count" + str(count))
-                ax.clear()
-                ax.set_ylim([-5,5])
-                ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
+                #print("count" + str(count))
                 #plt.grid(True, color="#444", alpha=0.5, linestyle="--")
                 #plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
 
