@@ -64,12 +64,20 @@ def createSampleData():
 
 def open_file_function():
     global df
+    fig = None
     fig, ax, df = open_file.open_file()
+    if fig is None:
+        pass
+    else:
+        supportClass.deleteCurrentLayout(container)
+        canvas = FigureCanvasTkAgg(fig, master=container)
 
-    supportClass.deleteCurrentLayout(container)
-    canvas = FigureCanvasTkAgg(fig, master=container)
+        canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
 
-    canvas.get_tk_widget().grid(row=0, column=1, rowspan=10)
+        root.protocol("WM_DELETE_WINDOW", callback)
+
+def callback():
+    exit(666)
 
 tk.mainloop()
 

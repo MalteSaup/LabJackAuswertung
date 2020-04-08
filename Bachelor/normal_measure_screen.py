@@ -78,7 +78,7 @@ class NormalMeasureScreen:
             df_set = True
             return df_set
         else:
-            return self.check_for_dfset(self)
+            return self.check_for_dfset()
 
     def show(self):
         self.support_class.root.protocol("WM_DELETE_WINDOW", self.callback)
@@ -167,7 +167,7 @@ class NormalMeasureScreen:
                 ax.clear()
                 x.append(count)
                 uebergabe = self.device.readRegister(0, numReg=26)
-                print(len(uebergabe))
+                #print(len(uebergabe))
                 for j in range(len(vars)):
                     #print(str(j) + " " + str(y[j]))
 
@@ -200,10 +200,12 @@ class NormalMeasureScreen:
                 #plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
             elif not df_set:
                 global df, fig
-                df = pd.DataFrame({
-                    "x0": x,
-                    "y0": y
-                })
+                df = pd.DataFrame()
+                df.insert(0, "x0", x, True)                 #True is allow duplicates
+                print("ASDSD" + str(len(df.columns)))
+                for i in range(len(y)):
+                    df.insert(len(df.columns), "y"+str(i), y[i], True)
+                    print(df)
                 df_set = True
 
         self.ani = FuncAnimation(fig, animate, interval=100)
