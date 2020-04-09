@@ -27,7 +27,8 @@ class NormalMeasureScreen:
         self.exportScreen = self.support_class.exportScreen
 
         self.checkboxes = []
-        self.checkbox_container = tk.Frame(self.support_class.root)
+        self.checkbox_container = None
+        self.plotting_container = None
 
 
 
@@ -93,7 +94,9 @@ class NormalMeasureScreen:
         x = []
         y = []
 
-        global count, oldtime, stopped, df_set, fig, ax, vars
+        global count, oldtime, stopped, df_set, fig, ax, vars, ls, ms
+        ls = "-"
+        ms = "None"
 
         colors = [
             "#00ff00",
@@ -111,25 +114,37 @@ class NormalMeasureScreen:
 
         #ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
 
+        self.checkbox_container = tk.Frame(self.root)
+        self.plotting_container = tk.Frame(self.root)
+        self.checkbox_container.pack(side=tk.LEFT)
+        self.plotting_container.pack(side=tk.RIGHT)
         #------------------------------------
 
         vars = []
 
+        tk.Label(self.checkbox_container, text="Chose AIN to Plot").grid(row=0, column=0, columnspan=2)
+
         for i in range(4):
             vars.append(tk.IntVar())
-            #if(i == 0):
-            vars[i].set(1)
+            if(i == 0):
+                vars[i].set(1)
             self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="AIN" + str(i), variable=vars[i]))
-            self.checkboxes[i].pack()
+            self.checkboxes[i].grid(row=1 + int(i/2), column=i % 2, padx=5, pady=5)
             y.append([])
         #------------------------------------
-        self.checkbox_container.pack()
-        canvas = FigureCanvasTkAgg(fig, master=self.root)
+        vars.append(tk.IntVar())
+        vars.append(tk.IntVar())
+        vars[-2].set(1)
+        self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="Line", variable=vars[-2]))
+        self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="Marker", variable=vars[-1]))
+        self.checkboxes[-2].grid(row=3, column=0, padx=5, pady=5)
+        self.checkboxes[-1].grid(row=3, column=1, padx=5, pady=5)
+        #self.checkbox_container.pack()
+        canvas = FigureCanvasTkAgg(fig, master=self.plotting_container)
         canvas.get_tk_widget().pack()
-
         def animate(i):
 
-            global df_set, count, oldtime, fig, ax
+            global df_set, count, oldtime, fig, ax, ls, ms
 
 
 
@@ -168,18 +183,25 @@ class NormalMeasureScreen:
                 x.append(count)
                 uebergabe = self.device.readRegister(0, numReg=26)
                 #print(len(uebergabe))
-                for j in range(len(vars)):
-                    #print(str(j) + " " + str(y[j]))
+                if(vars[-2].get() == 1):
+                    ls = "-"
+                else:
+                    ls = "None"
 
+                if(vars[-1].get() == 1):
+                    ms = "."
+                else:
+                    ms = "None"
 
+                for j in range(4):
                     if vars[j].get() == 1:
                         #print(colors[j])
                         y[j].append(uebergabe[j*2] / 10 )
-                        ax.set_ylim([-10, 15])
-                        ax.plot(x, y[j], linestyle="-", marker="None", color=colors[j])
-
+                        ax.plot(x, y[j], linestyle=ls, marker=ms, color=colors[j], markersize=0.8)
                     else:
                         y[j].append(None)
+                ax.set_ylim([-10, 15])
+
                 #print(perf_counter()- oldtime)
                 #oldtime = perf_counter()
 
