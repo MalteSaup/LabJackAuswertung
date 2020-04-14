@@ -62,7 +62,7 @@ class SupportClass:
         while self.running_flag:
             time.sleep(0.5)
             try:
-                print("OOF" + str(self.device.getAIN(0)))
+                print(str(self.device.getAIN(0)))
             except:
                 self.running_flag = False
                 if self.inMs:

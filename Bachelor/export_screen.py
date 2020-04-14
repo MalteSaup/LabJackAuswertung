@@ -1,5 +1,6 @@
 import tkinter as tk
 import pandas as pd
+import math
 
 global sample_shown, sample_entry, sample_label, options, df, window, root
 def on_save_screen_destroy(window):
@@ -11,6 +12,60 @@ def callback(P):
         return True
     else:
         return False
+
+def df_packer(df):
+    cols = df.columns
+    y = []
+    for col in cols:
+        if "x" in col:
+            x = df[col].copy().tolist()
+        elif "y" in col:
+            y.append([])
+            y[-1] = df[col].copy().tolist()
+
+    print("X" + str(x))
+
+    deleteArray = []
+    for i in range(len(y[0])):
+        delete = True
+        for col in y:
+            #print(str(col[i]) + " " + str(math.isnan(col[i])))
+            if not math.isnan(col[i]):
+                #print("NANANANANANN")
+                delete = False
+                break
+        if delete:
+            #print(i)
+            deleteArray.append(i)
+    print(deleteArray)
+    for i in range(len(deleteArray)-1, -1, -1):
+        print(i)
+        try:
+            x.pop(i)
+        except:
+            print(str(len(x)) + " "+ str(i))
+        for j in range(len(y)):
+            y[j].pop(i)
+
+    df_ueb = pd.DataFrame()
+    df_ueb.insert(0, "x0", x, True)
+    print(len(df_ueb.columns))
+    for j in range(len(y)):
+        df_ueb.insert(len(df_ueb.columns), "y" + str(j), y[j], True)
+
+    return df_ueb
+
+def df_sort(df):
+    cols = df.columns
+    y = []
+    for col in cols:
+        if "x" in col:
+            x = df[col].copy().tolist()
+        elif "y" in col:
+            y.append([])
+            y[-1] = df[col].copy().tolist()
+
+    #todo MERGE
 
 def save_file(datatype_description, datatype, fig, df, samplecount=0):
     global window, root
@@ -24,18 +79,20 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
 
         if datatype == ".png" or datatype == ".jpg" or datatype == ".pdf":
             fig.savefig(path)
-        elif datatype == ".csv":
-            if(df.get("x0").size <= samplecount or samplecount == 0):
-                df.to_csv(r""+path, index=False)
-            else:
-                uebergabe_df = sample_down(df, samplecount)
-                uebergabe_df.to_csv(r""+path, index=False)
-        elif datatype == ".xlsx":
-            if (df.get("x0").size <= samplecount or samplecount == 0):
-                df.to_excel(path)
-            else:
-                uebergabe_df = sample_down(df, samplecount)
-                uebergabe_df.to_excel(path)
+        else:
+            df = df_packer(df)
+            if datatype == ".csv":
+                if(df.get("x0").size <= samplecount or samplecount == 0):
+                    df.to_csv(r""+path, index=False)
+                else:
+                    uebergabe_df = sample_down(df, samplecount)
+                    uebergabe_df.to_csv(r""+path, index=False)
+            elif datatype == ".xlsx":
+                if (df.get("x0").size <= samplecount or samplecount == 0):
+                    df.to_excel(path)
+                else:
+                    uebergabe_df = sample_down(df, samplecount)
+                    uebergabe_df.to_excel(path)
         on_save_screen_destroy(window)
 
 def sample_down(df, samplecount):
@@ -58,8 +115,6 @@ def sample_down(df, samplecount):
 
     arr_x = []
     arr_y = []
-    df_arr_x = []
-    df_arr_y = []
     count = 0
 
     for i in range(sizes):
@@ -101,7 +156,7 @@ def var_change(var):
         if not sample_shown:
             sample_label.grid(row=1, column=0, padx=10, pady=10)
             sample_entry.grid(row=1, column=1, padx=10, pady=10)
-            sample_entry.insert(0, "20")
+            sample_entry.insert(0, "0")
             sample_shown = True
 
 def save_click(var, fig, df):

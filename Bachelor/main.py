@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import pandas as pd
+import threading
 
 import export_screen
 import open_file
@@ -44,7 +45,7 @@ supportClass.showMS()
 #dropdown.entryconfig("Save File", state=tk.NORMAL)         um deaktivierten Punkt wieder zu aktivieren
 
 def saveMeasureData():
-    supportClass.exportScreen.show_export_screen(supportClass.measureScreen.getData())
+    threading.Thread(supportClass.exportScreen.show_export_screen(supportClass.measureScreen.getData())).start()
 
 def createSampleData():
     arr_x = []
