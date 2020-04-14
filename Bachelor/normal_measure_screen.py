@@ -8,14 +8,18 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import threading
 import time
+import random
+import os
+
 import export_screen
 
 class NormalMeasureScreen:
 
-    def __init__(self, root, device, dropdown, support_class, resolution_x=10, resolution_y=10):
+    def __init__(self, root, device, dropdown, support_class, measure_type=0, resolution_x=10, resolution_y=10):
         self.device = device
         self.resolution_x = resolution_x
         self.resolution_y = resolution_y
+        self.measure_type = measure_type
         self.root = root
         self.dropdown = dropdown
         self.support_class = support_class
@@ -30,8 +34,6 @@ class NormalMeasureScreen:
         self.checkbox_container = None
         self.plotting_container = None
 
-
-
     """
     def clock(ratehz):
         start_time = perf_counter()
@@ -45,22 +47,6 @@ class NormalMeasureScreen:
     et = perf_counter()
     print(str((et - st)))
     """
-
-    def callback(self):
-        global ax, fig
-        print("IIFF")
-
-        ax.clear()
-        fig.clear()
-
-        plt.close()
-        self.ani.event_source.stop()
-
-
-        self.support_class.running_flag = False
-        self.support_class.root.destroy()
-        exit(666)       #nötig da sonst skript unendlich weiter läuft todo fehlersuche
-
 
     def init_save(self):
         global stopped, df
@@ -87,16 +73,21 @@ class NormalMeasureScreen:
         plt.rcParams['toolbar'] = "None"
         plt.style.use("dark_background")
         plt.grid(True)
-        #plt.block(False)
+        # plt.block(False)
 
         print("WUW")
 
         x = []
         y = []
 
-        global count, oldtime, stopped, df_set, fig, ax, vars, ls, ms
+        global count, oldtime, stopped, df_set, fig, ax, vars, ls, ms, running, t
+        running = True
+        t = None
+
         ls = "-"
         ms = "None"
+
+        running = True
 
         colors = [
             "#00ff00",
@@ -112,13 +103,13 @@ class NormalMeasureScreen:
         stopped = False
         df_set = False
 
-        #ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
+        # ax.plot(x, y, linestyle="-", marker="None", color="#00ff00")
 
         self.checkbox_container = tk.Frame(self.root)
         self.plotting_container = tk.Frame(self.root)
         self.checkbox_container.pack(side=tk.LEFT)
         self.plotting_container.pack(side=tk.RIGHT)
-        #------------------------------------
+        # ------------------------------------
 
         vars = []
 
@@ -126,12 +117,12 @@ class NormalMeasureScreen:
 
         for i in range(4):
             vars.append(tk.IntVar())
-            if(i == 0):
+            if (i == 0):
                 vars[i].set(1)
             self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="AIN" + str(i), variable=vars[i]))
-            self.checkboxes[i].grid(row=1 + int(i/2), column=i % 2, padx=5, pady=5)
+            self.checkboxes[i].grid(row=1 + int(i / 2), column=i % 2, padx=5, pady=5)
             y.append([])
-        #------------------------------------
+        # ------------------------------------
         vars.append(tk.IntVar())
         vars.append(tk.IntVar())
         vars[-2].set(1)
@@ -139,14 +130,13 @@ class NormalMeasureScreen:
         self.checkboxes.append(tk.Checkbutton(self.checkbox_container, text="Marker", variable=vars[-1]))
         self.checkboxes[-2].grid(row=3, column=0, padx=5, pady=5)
         self.checkboxes[-1].grid(row=3, column=1, padx=5, pady=5)
-        #self.checkbox_container.pack()
+        # self.checkbox_container.pack()
         canvas = FigureCanvasTkAgg(fig, master=self.plotting_container)
         canvas.get_tk_widget().pack()
-        def animate(i):
+
+        def animate_oszi(i):
 
             global df_set, count, oldtime, fig, ax, ls, ms
-
-
 
             if not stopped:
                 """
@@ -182,58 +172,160 @@ class NormalMeasureScreen:
                 ax.clear()
                 x.append(count)
                 uebergabe = self.device.readRegister(0, numReg=26)
-                #print(len(uebergabe))
-                if(vars[-2].get() == 1):
+                # print(len(uebergabe))
+                if (vars[-2].get() == 1):
                     ls = "-"
                 else:
                     ls = "None"
 
-                if(vars[-1].get() == 1):
+                if (vars[-1].get() == 1):
                     ms = "."
                 else:
                     ms = "None"
 
                 for j in range(4):
                     if vars[j].get() == 1:
-                        #print(colors[j])
-                        y[j].append(uebergabe[j*2] / 10 )
+                        # print(colors[j])
+                        y[j].append(uebergabe[j * 2] / 10)
                         ax.plot(x, y[j], linestyle=ls, marker=ms, color=colors[j], markersize=0.8)
                     else:
                         y[j].append(None)
                 ax.set_ylim([-10, 15])
 
-                #print(perf_counter()- oldtime)
-                #oldtime = perf_counter()
+                # print(perf_counter()- oldtime)
+                # oldtime = perf_counter()
 
                 count += 0.1
-                #print("count" + str(count))
-                #plt.grid(True, color="#444", alpha=0.5, linestyle="--")
-                #plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
+                # print("count" + str(count))
+                # plt.grid(True, color="#444", alpha=0.5, linestyle="--")
+                # plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
 
-                #plt.rcParams['toolbar'] = "None"
+                # plt.rcParams['toolbar'] = "None"
                 if count > 10:
-                    ax.set_xlim([count-self.resolution_x, count])
+                    ax.set_xlim([count - self.resolution_x, count])
                 else:
                     ax.set_xlim([0, self.resolution_x])
 
                 if df_set:
                     df_set = False
 
-                #plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
+                # plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
             elif not df_set:
                 global df, fig
                 df = pd.DataFrame()
-                df.insert(0, "x0", x, True)                 #True is allow duplicates
+                df.insert(0, "x0", x, True)  # True is allow duplicates
                 print("ASDSD" + str(len(df.columns)))
                 for i in range(len(y)):
-                    df.insert(len(df.columns), "y"+str(i), y[i], True)
+                    df.insert(len(df.columns), "y" + str(i), y[i], True)
                     print(df)
                 df_set = True
 
-        self.ani = FuncAnimation(fig, animate, interval=100)
-        self.ani.event_source.start()
+        def animate(i):
+            global df_set, count, oldtime, fig, ax, ls, ms
+
+            if not stopped:
+                ax.clear()
+
+                # print(len(uebergabe))
+                if (vars[-2].get() == 1):
+                    ls = "-"
+                else:
+                    ls = "None"
+
+                if (vars[-1].get() == 1):
+                    ms = "."
+                else:
+                    ms = "None"
+
+                for j in range(4):
+                    if vars[j].get() == 1:
+                        try:
+                            ax.plot(y[j], x, linestyle=ls, marker=ms, color=colors[j], markersize=0.8)
+                        except:
+                            print(str(len(x)) + " " + str(len(y[j])))
+
+                ax.set_ylim([-0.5, 1.5])
+                # print(perf_counter()- oldtime)
+                # oldtime = perf_counter()
+
+                count += 0.1
+                # print("count" + str(count))
+                # plt.grid(True, color="#444", alpha=0.5, linestyle="--")
+                # plt.ylim([0-self.resolution_y/2, 0+self.resolution_y/2])
+
+                # plt.rcParams['toolbar'] = "None"
+                ax.set_xlim([-0.5, 1.5])
+
+                if df_set:
+                    df_set = False
+
+
+
+                # plt.plot(x, y, linestyle="-", color="#00ff00", markersize=1, alpha=1)
+            elif not df_set:
+                global df, fig
+                df = pd.DataFrame()
+                df.insert(0, "x0", x, True)  # True is allow duplicates
+                print("ASDSD" + str(len(df.columns)))
+                for i in range(len(y)):
+                    df.insert(len(df.columns), "y" + str(i), y[i], True)
+                    print(df)
+                df_set = True
+
+        animations = [animate_oszi, animate]
+
+        def test():
+            time.sleep(0.2)
+            while running:
+                print(running)
+                clock(1000)
+
+
+
+        self.ani = FuncAnimation(fig, animations[1], interval=150)
+
+        def clock(ratehz):
+            start_time = perf_counter()
+            #print("HO")
+            while (perf_counter() - start_time < 1 / ratehz):
+                pass
+            numb = float(random.randint(0, 100)) / 100.0
+
+            uebergabe = self.device.readRegister(0, numReg=26)
+            for j in range(4):
+                if vars[j].get() == 1:
+                    # print(colors[j])
+                    y[j].append(abs(uebergabe[j * 2] / 10))
+                else:
+                    y[j].append(None)
+            x.append(abs(uebergabe[10] / 10))
+
+
+        t = threading.Thread(target=test)
+        t.start()
+
         def getData():
             return fig, df
 
+        # plt.show()
 
-        #plt.show()
+    def callback(self):
+        global ax, fig, t, running
+        print("IIFF")
+
+        kill = True
+
+        running = False
+        #t.join()
+
+        ax.clear()
+        fig.clear()
+
+        plt.close()
+        self.ani.event_source.stop()
+
+        self.support_class.running_flag = False
+        self.support_class.root.destroy()
+        print("VORHER")
+        self.support_class.t.running_flag = False
+        os._exit(666)  # nötig da sonst skript unendlich weiter läuft todo fehlersuche

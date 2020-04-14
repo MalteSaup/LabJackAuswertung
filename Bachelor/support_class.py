@@ -17,6 +17,7 @@ class SupportClass:
         self.exportScreen = None
         self.transistorScreen = None
         self.inMS = False
+        self.t = None
 
         self.running_flag = False
 
@@ -54,14 +55,14 @@ class SupportClass:
 
         self.running_flag = True
 
-        t = threading.Thread(target=self.check)
-        t.start()
+        self.t = threading.Thread(target=self.check)
+        self.t.start()
 
     def check(self):
         while self.running_flag:
             time.sleep(0.5)
             try:
-                print(self.device.getAIN(0))
+                print("OOF" + str(self.device.getAIN(0)))
             except:
                 self.running_flag = False
                 if self.inMs:
