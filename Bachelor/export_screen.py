@@ -3,9 +3,12 @@ import pandas as pd
 import math
 
 global sample_shown, sample_entry, sample_label, options, df, window, root
+
+
 def on_save_screen_destroy(window):
     window.grab_release()
     window.destroy()
+
 
 def callback(P):
     if str.isdigit(P) or P == "":
@@ -13,15 +16,9 @@ def callback(P):
     else:
         return False
 
+
 def df_packer(df):
-    cols = df.columns
-    y = []
-    for col in cols:
-        if "x" in col:
-            x = df[col].copy().tolist()
-        elif "y" in col:
-            y.append([])
-            y[-1] = df[col].copy().tolist()
+    x, y = df_to_xy_array(df)
 
     print("X" + str(x))
 
@@ -29,21 +26,21 @@ def df_packer(df):
     for i in range(len(y[0])):
         delete = True
         for col in y:
-            #print(str(col[i]) + " " + str(math.isnan(col[i])))
+            # print(str(col[i]) + " " + str(math.isnan(col[i])))
             if not math.isnan(col[i]):
-                #print("NANANANANANN")
+                # print("NANANANANANN")
                 delete = False
                 break
         if delete:
-            #print(i)
+            # print(i)
             deleteArray.append(i)
     print(deleteArray)
-    for i in range(len(deleteArray)-1, -1, -1):
+    for i in range(len(deleteArray) - 1, -1, -1):
         print(i)
         try:
             x.pop(i)
         except:
-            print(str(len(x)) + " "+ str(i))
+            print(str(len(x)) + " " + str(i))
         for j in range(len(y)):
             y[j].pop(i)
 
@@ -55,7 +52,8 @@ def df_packer(df):
 
     return df_ueb
 
-def df_sort(df):
+
+def df_to_xy_array(df):
     cols = df.columns
     y = []
     for col in cols:
@@ -65,14 +63,70 @@ def df_sort(df):
             y.append([])
             y[-1] = df[col].copy().tolist()
 
-    #todo MERGE
+    return x, y
+
+def y_mergehelper(arr_ueb, arr, numb, pos):             #TODO Probelm mit dem mergehelper. es kommen zwei/drei etc gleich arrays raus 
+    print("TEST" +str(arr_ueb) + ": " + str(arr))
+    for i in range(len(arr_ueb)):
+        while numb > len(arr_ueb[i])-1:
+          arr_ueb[i].append(0)
+        arr_ueb[i][numb] = arr[i][pos]
+    print("TEST" + str(arr_ueb))
+    return arr_ueb
+
+def y_cutter(arr, cut, left=True):
+    arr_ueb = [[]] * len(arr)
+    for i in range(len(arr_ueb)):
+        if left:
+            arr_ueb[i] = arr[i][:cut]
+        else:
+            arr_ueb[i] = arr[i][cut:]
+    return arr_ueb
+
+def merge(left_x, right_x, left_y, right_y):
+    i = 0
+    j = 0
+    arr_ueb_x = [None] * (len(left_x) + len(right_x))
+    arr_ueb_y = [[]] * len(left_y)
+    for numb in range(len(left_x) + len(right_x)):
+        if i >= len(left_x):
+            arr_ueb_x[numb] = right_x[j]
+            arr_ueb_y = y_mergehelper(arr_ueb_y, right_y, numb, j)
+            j += 1
+        elif j >= len(right_x):
+            arr_ueb_x[numb] = left_x[i]
+            arr_ueb_y = y_mergehelper(arr_ueb_y, left_y, numb, i)
+            i += 1
+        elif left_x[i] <= right_x[j]:
+            arr_ueb_x[numb] = left_x[i]
+            arr_ueb_y = y_mergehelper(arr_ueb_y, left_y, numb, i)
+            i += 1
+        else:
+            arr_ueb_x[numb] = right_x[j]
+            arr_ueb_y = y_mergehelper(arr_ueb_y, right_y, numb, j)
+            j += 1
+    return arr_ueb_x, arr_ueb_y
+
+
+def merge_sort(arr_x, arr_y):
+    cut = int(len(arr_x) / 2)
+    left_x = arr_x[:cut].copy()
+    if len(left_x) > 1:
+        left_y = y_cutter(arr_y, cut)
+        left_x, left_y = merge_sort(left_x, left_y)
+    right_x = arr_x[cut:].copy()
+    if len(right_x) > 1:
+        right_y = y_cutter(arr_y, cut, False)
+        right_x, right_y = merge_sort(right_x, right_y)
+    return merge(left_x, right_x, left_y, right_y)
+
 
 def save_file(datatype_description, datatype, fig, df, samplecount=0):
     global window, root
 
     path = tk.filedialog.asksaveasfilename(initialfile="unnamed", initialdir="./", title="Save as",
-                                        filetypes=[(datatype_description, "*"+datatype),
-                                                   ("Any File", "*.*")])
+                                           filetypes=[(datatype_description, "*" + datatype),
+                                                      ("Any File", "*.*")])
     print(path)
     if path != "":
         path += datatype
@@ -82,11 +136,11 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
         else:
             df = df_packer(df)
             if datatype == ".csv":
-                if(df.get("x0").size <= samplecount or samplecount == 0):
-                    df.to_csv(r""+path, index=False)
+                if (df.get("x0").size <= samplecount or samplecount == 0):
+                    df.to_csv(r"" + path, index=False)
                 else:
                     uebergabe_df = sample_down(df, samplecount)
-                    uebergabe_df.to_csv(r""+path, index=False)
+                    uebergabe_df.to_csv(r"" + path, index=False)
             elif datatype == ".xlsx":
                 if (df.get("x0").size <= samplecount or samplecount == 0):
                     df.to_excel(path)
@@ -94,6 +148,7 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
                     uebergabe_df = sample_down(df, samplecount)
                     uebergabe_df.to_excel(path)
         on_save_screen_destroy(window)
+
 
 def sample_down(df, samplecount):
     arr_df = df.to_numpy()
@@ -121,12 +176,12 @@ def sample_down(df, samplecount):
         arr_x.append([])
         arr_y.append([])
 
-    #print(arr_df)
+    # print(arr_df)
 
     for i in range(samplecount):
         for j in range(sizes):
-            arr_x[j].append(arr_df[int(count)][j*2])
-            arr_y[j].append(arr_df[int(count)][j*2+1])
+            arr_x[j].append(arr_df[int(count)][j * 2])
+            arr_y[j].append(arr_df[int(count)][j * 2 + 1])
         count += arr_size / samplecount
     print(arr_x)
 
@@ -159,6 +214,7 @@ def var_change(var):
             sample_entry.insert(0, "0")
             sample_shown = True
 
+
 def save_click(var, fig, df):
     global options, sample_entry
     print(var)
@@ -174,11 +230,10 @@ def save_click(var, fig, df):
         samplecount = int(sample_entry.get())
         save_file("CSV File", ".csv", fig, df, samplecount)
 
+
 class ExportScreen:
     def __init__(self, root):
         self.root = root
-
-
 
     def show_export_screen(self, fig, df):
         global sample_shown, sample_entry, sample_label, options, window
@@ -195,8 +250,10 @@ class ExportScreen:
         window.iconbitmap('icon.ico')
         window.protocol("WM_DELETE_WINDOW", lambda: on_save_screen_destroy(window))
 
-        cancel_button = tk.Button(window, text="Cancel", command=lambda: on_save_screen_destroy(window), width=10, height=1)
-        save_button = tk.Button(window, text="Export", width=10, height=1, command=lambda: save_click(var.get(), fig, df))
+        cancel_button = tk.Button(window, text="Cancel", command=lambda: on_save_screen_destroy(window), width=10,
+                                  height=1)
+        save_button = tk.Button(window, text="Export", width=10, height=1,
+                                command=lambda: save_click(var.get(), fig, df))
         options = [
             "PDF (.pdf)",
             "JPEG (.jpg)",
