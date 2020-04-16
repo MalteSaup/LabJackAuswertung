@@ -163,9 +163,9 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
 
 
 def sample_down(df, samplecount):
-    arr_df = df.to_numpy()
-    arr_size = float(len(arr_df))
-    sizes = int(len(arr_df[0]) / 2)
+    x, y = df_to_xy_array(df)
+    #arr_size = float(len(arr_df))
+    #sizes = int(len(arr_df[0]) / 2)
     """
     arr_x = []
     arr_y = []
@@ -182,34 +182,36 @@ def sample_down(df, samplecount):
 
     arr_x = []
     arr_y = []
+    for i in range(len(y)):             #Fehler vermeidung weil wenn durch [[]] * len(y) initialisierung bei z.B. 20 samples das array 40 wird weil die arrays sich intern clonen bei veränderung 
+        arr_y.append([])
     count = 0
 
+
+    """
     for i in range(sizes):
         arr_x.append([])
         arr_y.append([])
-
+    """
     # print(arr_df)
 
     for i in range(samplecount):
-        for j in range(sizes):
-            arr_x[j].append(arr_df[int(count)][j * 2])
-            arr_y[j].append(arr_df[int(count)][j * 2 + 1])
-        count += arr_size / samplecount
-    print(arr_x)
+        arr_x.append(x[int(count)])
+        for j in range(len(arr_y)):
+            arr_y[j].append(y[j][int(count)])
+        count += len(x) / samplecount
 
-    data_frames = []
+    print("----------------------")
+    print(len(arr_x))
+    print(len(arr_y[0]))
+    print(arr_y[1])
+    print("----------------------")
 
-    for i in range(sizes):
-        data_frames.append(pd.DataFrame({"x" + str(i): arr_x[i]}))
-        data_frames.append(pd.DataFrame({"y" + str(i): arr_y[i]}))
+    data_frame = pd.DataFrame()
+    data_frame.insert(0, "x0", arr_x, True)
+    for i in range(len(y)):
+        data_frame.insert(len(data_frame.columns), "y" + str(i), arr_y[i], True)
 
-    df_uebergabe = data_frames[0]
-    print(len(data_frames))
-    for i in range(1, len(data_frames)):
-        df_uebergabe = df_uebergabe.join(data_frames[i])
-
-    print(df_uebergabe)
-    return df_uebergabe
+    return data_frame
 
 
 def var_change(var):
