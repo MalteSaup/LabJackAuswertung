@@ -43,7 +43,7 @@ def df_packer(df):
             print(str(len(x)) + " " + str(i))
         for j in range(len(y)):
             y[j].pop(i)
-
+    x, y = merge_sort(x, y)
     df_ueb = pd.DataFrame()
     df_ueb.insert(0, "x0", x, True)
     print(len(df_ueb.columns))
@@ -65,14 +65,16 @@ def df_to_xy_array(df):
 
     return x, y
 
-def y_mergehelper(arr_ueb, arr, numb, pos):             #TODO Probelm mit dem mergehelper. es kommen zwei/drei etc gleich arrays raus 
-    print("TEST" +str(arr_ueb) + ": " + str(arr))
+
+def y_mergehelper(arr_ueb, arr, numb, pos):
+    # print("TEST" +str(arr_ueb) + ": " + str(arr))
     for i in range(len(arr_ueb)):
-        while numb > len(arr_ueb[i])-1:
-          arr_ueb[i].append(0)
+        while numb > len(arr_ueb[i]) - 1:
+            arr_ueb[i].append(0)
         arr_ueb[i][numb] = arr[i][pos]
-    print("TEST" + str(arr_ueb))
+    # print("TEST" + str(arr_ueb))
     return arr_ueb
+
 
 def y_cutter(arr, cut, left=True):
     arr_ueb = [[]] * len(arr)
@@ -83,13 +85,22 @@ def y_cutter(arr, cut, left=True):
             arr_ueb[i] = arr[i][cut:]
     return arr_ueb
 
+
 def merge(left_x, right_x, left_y, right_y):
+    arr_ueb_x = [None] * (len(left_x) + len(right_x))
+    # print(arr_ueb_x)
+    arr_ueb_y = []
+    mul_arr = [None] * (len(left_y[0]) + len(right_y))
+    for i in range(len(left_y)):
+        arr_ueb_y.append(mul_arr.copy())
     i = 0
     j = 0
-    arr_ueb_x = [None] * (len(left_x) + len(right_x))
-    arr_ueb_y = [[]] * len(left_y)
+    # print(i)
+    # print(j)
     for numb in range(len(left_x) + len(right_x)):
+        # print("LEFT: " + str(left_x) +  " RIGHT: " + str(right_x))
         if i >= len(left_x):
+            # print(right_x[j])
             arr_ueb_x[numb] = right_x[j]
             arr_ueb_y = y_mergehelper(arr_ueb_y, right_y, numb, j)
             j += 1
@@ -111,12 +122,12 @@ def merge(left_x, right_x, left_y, right_y):
 def merge_sort(arr_x, arr_y):
     cut = int(len(arr_x) / 2)
     left_x = arr_x[:cut].copy()
+    left_y = y_cutter(arr_y, cut)
     if len(left_x) > 1:
-        left_y = y_cutter(arr_y, cut)
         left_x, left_y = merge_sort(left_x, left_y)
     right_x = arr_x[cut:].copy()
+    right_y = y_cutter(arr_y, cut, False)
     if len(right_x) > 1:
-        right_y = y_cutter(arr_y, cut, False)
         right_x, right_y = merge_sort(right_x, right_y)
     return merge(left_x, right_x, left_y, right_y)
 
@@ -135,6 +146,7 @@ def save_file(datatype_description, datatype, fig, df, samplecount=0):
             fig.savefig(path)
         else:
             df = df_packer(df)
+
             if datatype == ".csv":
                 if (df.get("x0").size <= samplecount or samplecount == 0):
                     df.to_csv(r"" + path, index=False)
