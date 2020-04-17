@@ -69,8 +69,6 @@ def df_to_xy_array(df):
 def y_mergehelper(arr_ueb, arr, numb, pos):
     # print("TEST" +str(arr_ueb) + ": " + str(arr))
     for i in range(len(arr_ueb)):
-        while numb > len(arr_ueb[i]) - 1:
-            arr_ueb[i].append(0)
         arr_ueb[i][numb] = arr[i][pos]
     # print("TEST" + str(arr_ueb))
     return arr_ueb
@@ -90,15 +88,17 @@ def merge(left_x, right_x, left_y, right_y):
     arr_ueb_x = [None] * (len(left_x) + len(right_x))
     # print(arr_ueb_x)
     arr_ueb_y = []
-    mul_arr = [None] * (len(left_y[0]) + len(right_y))
+    mul_arr = [None] * (len(left_y[0]) + len(right_y[0]))
     for i in range(len(left_y)):
         arr_ueb_y.append(mul_arr.copy())
     i = 0
     j = 0
     # print(i)
     # print(j)
+
     for numb in range(len(left_x) + len(right_x)):
-        # print("LEFT: " + str(left_x) +  " RIGHT: " + str(right_x))
+
+
         if i >= len(left_x):
             # print(right_x[j])
             arr_ueb_x[numb] = right_x[j]
@@ -116,6 +116,7 @@ def merge(left_x, right_x, left_y, right_y):
             arr_ueb_x[numb] = right_x[j]
             arr_ueb_y = y_mergehelper(arr_ueb_y, right_y, numb, j)
             j += 1
+
     return arr_ueb_x, arr_ueb_y
 
 
@@ -200,11 +201,6 @@ def sample_down(df, samplecount):
             arr_y[j].append(y[j][int(count)])
         count += len(x) / samplecount
 
-    print("----------------------")
-    print(len(arr_x))
-    print(len(arr_y[0]))
-    print(arr_y[1])
-    print("----------------------")
 
     data_frame = pd.DataFrame()
     data_frame.insert(0, "x0", arr_x, True)

@@ -29,7 +29,7 @@ class SupportClass:
     def showNMS(self, resolution_x=10, resolution_y=10):
         self.inMS = False
         if self.measureScreen is None:
-            self.measureScreen = normal_measure_screen.NormalMeasureScreen(self.container, self.device, self.dropdown, self, resolution_x, resolution_y)
+            self.measureScreen = normal_measure_screen.NormalMeasureScreen(self.container, self.device, self.dropdown, self, 0, resolution_x, resolution_y)
 
         if self.measureScreen.resolution_x != resolution_x:
             self.measureScreen.resolution_x = resolution_x
