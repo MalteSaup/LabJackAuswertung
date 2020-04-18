@@ -29,7 +29,7 @@ class TransistorShow:
     def __init__(self, root):
         self.root = root
 
-    def show(self):
+    def show(self, container):
         fig, axs = plt.subplots(2, 2,
                                 gridspec_kw={"hspace": 0, "wspace": 0})
 
@@ -116,5 +116,5 @@ class TransistorShow:
 
 
 
-        return FigureCanvasTkAgg(fig, master=self.root)
+        return fig, [ax1, ax2, ax3, ax4]
 

@@ -1,6 +1,7 @@
 import normal_measure_screen
 import export_screen
 import main_screen
+import transistor
 import time
 import threading
 
@@ -17,6 +18,7 @@ class SupportClass:
         self.exportScreen = None
         self.transistorScreen = None
         self.inMS = False
+        self.inMeasure = False
         self.t = None
 
         self.running_flag = False
@@ -26,10 +28,12 @@ class SupportClass:
             if str(obj) != ".!menu":
                 obj.destroy()
 
-    def showNMS(self, resolution_x=10, resolution_y=10):
+    def showNMS(self, measure_type, resolution_x=10, resolution_y=10):
         self.inMS = False
+        self.inMeasure = True
+        self.mainScreen = None
         if self.measureScreen is None:
-            self.measureScreen = normal_measure_screen.NormalMeasureScreen(self.container, self.device, self.dropdown, self, 0, resolution_x, resolution_y)
+            self.measureScreen = normal_measure_screen.NormalMeasureScreen(self.container, self.device, self.dropdown, self, measure_type, resolution_x, resolution_y)
 
         if self.measureScreen.resolution_x != resolution_x:
             self.measureScreen.resolution_x = resolution_x
@@ -43,10 +47,23 @@ class SupportClass:
         self.inMS = True
         if self.mainScreen is None:
             self.mainScreen = main_screen.MainScreen(self.container, self.dropdown, self)
-
+        if self.measureScreen is not None:
+            self.measureScreen = None
+        if self.transistorScreen is not None:
+            self.transistorScreen = None
         self.deleteCurrentLayout(self.container)
 
         self.mainScreen.show()
+
+        if self.inMeasure:
+            if self.running_flag:
+                self.mainScreen.start_measure_button["state"] = tk.ACTIVE
+            self.inMeasure = False
+
+    def showTransistor(self, container):
+        if self.transistorScreen is None:
+            self.transistorScreen = transistor.TransistorShow(self.container)
+        return self.transistorScreen.show(container)
 
     def createExportScreen(self):
         self.exportScreen = export_screen.ExportScreen(self.root)
@@ -65,11 +82,15 @@ class SupportClass:
                 print(str(self.device.getAIN(0)))
             except:
                 self.running_flag = False
-                if self.inMs:
+                if self.inMS:
                     self.mainScreen.connection_state_label.grid_remove()
                     self.mainScreen.connection_state_label = tk.Label(self.root, text="Connection State: Connection Lost")
+                    self.mainScreen.start_measure_button["state"] = tk.DISABLED
                     self.mainScreen.connection_state_label.grid(sticky=tk.SW, row=11, column=0, columnspan=2, pady=10)
 
+                if self.inMeasure:
+                    tk.messagebox.showerror("HAW LabJack", "Connection to LabJack lost")
+                    self.showMS()
 
 
 
