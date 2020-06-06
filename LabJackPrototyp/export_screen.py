@@ -38,14 +38,14 @@ class ExportScreen(qt.QMainWindow):
 
     def saveFile(self, datatypeDescription, datatype):
         try:
-            self.df.get(self.columnName[0]).size #TODO WAS ZUM PRÜTZEL
+            print("GRÖ?E " + str(self.df.get(self.columnName[0]).size)) #TODO WAS ZUM PRÜTZEL
         except Exception as ex:
             print(ex)
         path_full = qt.QFileDialog.getSaveFileName(self, "Save File", "unnamed", datatypeDescription + " (*"+datatype + ");;Any Files (*.*)")
         path = path_full[0]
         if path != "":
             if datatype == ".png" or datatype == ".jpg" or datatype == ".pdf":
-                self.fig.savefig(path)
+                self.fig.savefig(path)#todo repair 
             else:
                 self.df = self.dfPacker(self.df)
                 sampleCount = int(self.layout.sampleRate.input.text())

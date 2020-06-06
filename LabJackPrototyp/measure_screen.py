@@ -84,18 +84,21 @@ class MeasureScreen(qt.QWidget):
 
         self.setLayout(layout)
 
-    def updateDataset(self):
+    def updateDataset(self, index):
         if self.notStopped:
             uebergabe = self.supportClass.device.readRegister(0, 26)
 
             for i in range(4):
                 if self.checkboxChecker[i].isChecked():
-                    self.ax_y[i].append(abs(uebergabe[i]))
+                    self.ax_y[i].append(1+abs(uebergabe[i]))
                 else:
                     self.ax_y[i].append(math.nan)
             if self.functionCode == 0:
                 self.ax_x.append(self.count)
                 self.count += 0.1
+            elif self.functionCode == 1:
+                self.ax_x.append(abs(1+uebergabe[index]))
+
 
 
     def checkboxLayoutManipulator(self):
@@ -111,12 +114,16 @@ class MeasureScreen(qt.QWidget):
             self.checkboxes.leftCheck.checkBoxes[1 + int(index / 2)].setEnabled(False)
 
     def startMeasure(self):
+        try:
+            index = self.checkboxes.comboBox.currentIndex()
+        except:
+            index = -1
         self.checkboxes.comboBox.setEnabled(False)
-        self.measureClock()
+        self.measureClock(index)
 
-    def measureClock(self):
+    def measureClock(self, index=-1):
         self.timer = qtcore.QTimer(self)
-        self.timer.timeout.connect(self.updateDataset)
+        self.timer.timeout.connect(lambda: self.updateDataset(index))
         self.timer.start(self.samplerate)
 
     def saveClick(self):
