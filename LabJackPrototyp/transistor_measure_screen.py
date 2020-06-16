@@ -1,8 +1,11 @@
 import math
+import time
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
+
+import threading
 
 import copy
 import pandas as pd
@@ -35,8 +38,12 @@ class TransistorScreen(qt.QWidget):
 
         self.columnNames = ["IC", "UCE", "UBE", "IB"]
 
+        self.tb = 0
+
         self.measureData = [[], [], [], []]
         self.measurePorts = None
+
+        self.t = None
 
         self.notStopped = True
 
@@ -56,8 +63,8 @@ class TransistorScreen(qt.QWidget):
         self.cbh.returnButton.pressed.connect(self.returnToMainScreen)
         self.cbh.startMeasureButton.pressed.connect(self.startMeasure)
 
-        for i in range(len(self.cbh.comboBoxes)):
-            self.cbh.comboBoxes[i].currentIndexChanged.connect(lambda x=i: self.comboBoxChecker(x))
+        #for i in range(len(self.cbh.comboBoxes)):
+        #    self.cbh.comboBoxes[i].currentIndexChanged.connect(lambda x=i: self.comboBoxChecker(x))
 
         self.show()
         self.plt.canvas.resize(774, 424)
@@ -74,20 +81,23 @@ class TransistorScreen(qt.QWidget):
                 if i != index[0]:
                     self.cbh.comboBoxes[i].model().item(index[1]).setEnabled(False)
 
+
+
+
+
     def updateDataset(self):
         if self.notStopped:
-            uebergabe = self.supportClass.device.readRegister(0, 26)
+            uebergabe = self.supportClass.device.readRegister(0, 16)
+            uebergabeData = []
+            uebergabeData.append(abs(uebergabe[0] - uebergabe[1]))
+            uebergabeData.append(abs(uebergabe[2] - uebergabe[3]))
+            uebergabeData.append(abs(uebergabe[4] - uebergabe[6]))
+            uebergabeData.append(abs(uebergabe[5] - uebergabe[7]))
 
-            self.measureData[0].append((abs(uebergabe[self.measurePorts[0]]))*2.0)
-            self.measureData[1].append((abs(uebergabe[self.measurePorts[1]]))*22.0)
-            self.measureData[2].append((abs(uebergabe[self.measurePorts[2]]))*0.08)
-            self.measureData[3].append((abs(uebergabe[self.measurePorts[3]]))*22.0)
-
-            print(self.measureData)
-
-    def comboboxLayoutManipulator(self):
-        print()
-        #TODO ANHAND DER AUSWAHL BEI COMBOBOXEN DIE ITEMS BEI DEN ANDEREN SPERREN
+            self.measureData[0].append((abs(uebergabeData[self.measurePorts[0]])) / 200 * 1000)
+            self.measureData[1].append((abs(uebergabeData[self.measurePorts[1]])))
+            self.measureData[2].append((abs(uebergabeData[self.measurePorts[2]])))
+            self.measureData[3].append((abs(uebergabeData[self.measurePorts[3]])) / 1e5 * 1e6)
 
     def startMeasure(self):
         self.measurePorts = [self.cbh.comboBoxes[1].currentIndex()-1, self.cbh.comboBoxes[2].currentIndex()-1, self.cbh.comboBoxes[3].currentIndex()-1, self.cbh.comboBoxes[0].currentIndex()-1]
@@ -95,7 +105,8 @@ class TransistorScreen(qt.QWidget):
             comboBox.setEnabled(False)
         print(self.measurePorts)
         #TODO BEHAVIOUR CHECK WHEN ONE COMBOBOX HAS NO VALUE
-        self.measureClock()
+        self.t = threading.Thread(target=self.measureClock())
+        self.t.start()
 
     def measureClock(self):
         self.timer = qtcore.QTimer(self)
@@ -154,10 +165,10 @@ class ComboBoxHolder(qt.QWidget):
         super().__init__()
         self.options = [
             "None",
-            "AIN 0",
-            "AIN 1",
-            "AIN 2",
-            "AIN 3"
+            "Kanal 1",
+            "Kanal 2",
+            "Kanal 3",
+            "Kanal 4"
         ]
         self.comboBoxes = []
         self.returnButton = None
@@ -266,14 +277,15 @@ class TransistorMeasureScreen(qt.QWidget):
         self.setLayout(layout)
     def animation(self):
         sameLength, arrUeb = self.checkLength()
+        print(sameLength)
         if sameLength:
             for ax in self.axes:
                 ax.clear()
             self.initAxes()
-            self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=0.8)
-            self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=0.8)
-            self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=0.8)
-            self.axes[3].plot(arrUeb[1], arrUeb[2], color="yellow", linestyle="None", marker=".", markersize=0.8)
+            self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=1)
+            self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=1)
+            self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=1)
+            self.axes[3].plot(arrUeb[1], arrUeb[2], color="yellow", linestyle="None", marker=".", markersize=1)
 
 
         """for i in range(4):
@@ -295,8 +307,8 @@ class TransistorMeasureScreen(qt.QWidget):
         self.axes[0].spines["top"].set_color("none")
         self.axes[0].spines["left"].set_color("none")
         #self.axes[0].set_xticks([0, 50, 100, 150, 200, 250])
-        self.axes[0].set_xlim(0, 270)
-        self.axes[0].set_ylim(0, 30)
+        self.axes[0].set_xlim(0, 200)
+        self.axes[0].set_ylim(0, 40)
         self.axes[0].get_xaxis().set_visible(False)
         self.axes[0].get_yaxis().set_visible(False)
         self.axes[0].invert_xaxis()
@@ -306,29 +318,32 @@ class TransistorMeasureScreen(qt.QWidget):
         self.axes[1].get_xaxis().set_visible(False)
         self.axes[1].set_yticks([0, 10, 20, 30])
         self.axes[1].set_yticklabels(["", 10, 20, 30])
-        self.axes[1].set_xlim(0, 30)
-        self.axes[1].set_ylim(0, 30)
+        self.axes[1].set_xlim(0, 1.0)
+        self.axes[1].set_ylim(0, 40)
+        self.axes[1].invert_xaxis()
 
         self.axes[2].spines["bottom"].set_color("none")
         self.axes[2].spines["left"].set_color("none")
-        self.axes[2].get_yaxis().set_visible(False)
-        self.axes[2].set_xticks([0, 50, 100, 150, 200, 250])
-        self.axes[2].set_xticklabels(["", 50, 100, 150, 200, 250])
-        self.axes[2].set_xlim(0, 270)
+        #self.axes[2].get_yaxis().set_visible(False)
+        self.axes[2].set_xticks([0, 50, 100, 150])
+        self.axes[2].set_xticklabels(["", 50, 100, 150])
+        self.axes[2].set_xlim(0, 200)
         self.axes[2].set_ylim(0, 1.0)
         self.axes[2].invert_xaxis()
+        self.axes[2].invert_yaxis()
         self.axes[2].xaxis.tick_top()
 
         self.axes[3].spines["right"].set_color("none")
         self.axes[3].spines["bottom"].set_color("none")
-        self.axes[3].set_xticks([0, 10, 20, 30])
-        self.axes[3].set_xticklabels(["", 10, 20, 30])
+        self.axes[3].set_xticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+        self.axes[3].set_xticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
         self.axes[3].set_yticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
         self.axes[3].set_yticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-        self.axes[3].set_xlim(0, 30)
+        self.axes[3].set_xlim(0, 1.0)
         self.axes[3].set_ylim(0, 1.0)
         self.axes[3].invert_yaxis()
         self.axes[3].xaxis.tick_top()
+        #self.axes[3].get_yaxis().set_visible(False)
 
 
     def checkLength(self):

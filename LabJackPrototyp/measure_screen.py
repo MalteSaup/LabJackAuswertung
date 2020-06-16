@@ -50,6 +50,9 @@ class MeasureScreen(qt.QWidget):
         self.ls = "-"
         self.ms = "."
 
+        self.mVtoV = 1000
+        self.mAtoA = 1000
+
         # self.initUI()
 
     def initUI(self):
@@ -61,7 +64,6 @@ class MeasureScreen(qt.QWidget):
         self.checkboxes = CheckBoxes(self.functionCode)
 
         self.checkboxes.exitButton.pressed.connect(self.returnToMainScreen)
-
         self.checkboxChecker.append(self.checkboxes.leftCheck.checkBoxes[1])
         self.checkboxChecker.append(self.checkboxes.rightCheck.checkBoxes[1])
         self.checkboxChecker.append(self.checkboxes.leftCheck.checkBoxes[2])
@@ -89,15 +91,27 @@ class MeasureScreen(qt.QWidget):
             uebergabe = self.supportClass.device.readRegister(0, 26)
 
             for i in range(4):
+                # Da 1000 mV und 1000 Ohm kann Berechnung vernachlässigt werden da 1000 / 1000 = 1
                 if self.checkboxChecker[i].isChecked():
-                    self.ax_y[i].append(1+abs(uebergabe[i]))
+                    if i <= 1:
+                        self.ax_y[i].append(abs(uebergabe[i*2] - uebergabe[i*2+1]))
+                    elif i == 2:
+                        self.ax_y[i].append(abs(uebergabe[4] - uebergabe[6]))
+                    elif i == 3:
+                        self.ax_y[i].append(abs(uebergabe[5] - uebergabe[7]))
                 else:
                     self.ax_y[i].append(math.nan)
             if self.functionCode == 0:
                 self.ax_x.append(self.count)
-                self.count += 0.1
+                self.count += 1
             elif self.functionCode == 1:
-                self.ax_x.append(abs(1+uebergabe[index]))
+                if index <= 1:
+                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]) * self.mVtoV)
+                elif index == 2:
+                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]) * self.mVtoV)
+                elif index == 3:
+                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]) * self.mVtoV)
+
 
 
 
@@ -197,12 +211,12 @@ class CheckBoxes(qt.QWidget):
         layoutHolderCheckboxes.setLayout(hlayout)
 
         if self.functionCode == 1:
-            label = qt.QLabel("Choose Measure Port for X-Axes: ")
+            label = qt.QLabel("Choose Measure Channel for X-Axes: ")
             options = [
-                "AIN0",
-                "AIN1",
-                "AIN2",
-                "AIN3"
+                "Kanal 1",
+                "Kanal 2",
+                "Kanal 3",
+                "Kanal 4"
             ]
             self.comboBox = qt.QComboBox()
             for option in options:
@@ -217,7 +231,6 @@ class CheckBoxes(qt.QWidget):
             self.leftCheck.checkBoxes[1].setCheckState(False)
             self.leftCheck.checkBoxes[1].setEnabled(False)
 
-            # vlayout.setAlignment(qtcore.Qt.AlignTop)
         else:
             vlayout.addWidget(layoutHolderCheckboxes)
 
@@ -290,7 +303,7 @@ class NormalMeasureScreen(qt.QWidget):
         self.xue = []
         self.yue = []
 
-        self.resolutionX = 10
+        self.resolutionX = 1000
 
         self.functionCode = functionCode
         self.count = count
@@ -327,7 +340,7 @@ class NormalMeasureScreen(qt.QWidget):
             drawable, x_ue, y_ue = self.checkXYLength()
 
             self.ax.clear()
-            self.ax.set_ylim([0, 11])
+            self.ax.set_ylim([-1, 11])
 
             if self.functionCode == 0:
                 if (self.xue == []):
@@ -340,7 +353,7 @@ class NormalMeasureScreen(qt.QWidget):
                         self.ax.set_xlim([0, self.resolutionX])
 
             elif self.functionCode == 1:
-                self.ax.set_xlim([-1, 11])
+                self.ax.set_xlim([0, self.resolutionX])
 
             if drawable:
                 self.xue = list(x_ue)
