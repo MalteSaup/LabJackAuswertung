@@ -31,10 +31,8 @@ class SupportClass:
                 print(self.device.getAIN(0))
                 self.device.getCalibrationData()
                 self.checkConnectionThread()
-                print("HA")
             return True
         except:
-            print("HO")
             return False
 
     def checkConnectionThread(self):
@@ -49,7 +47,6 @@ class SupportClass:
             try:
                 self.device.getAIN(0)
             except:
-                print("JALLO DALLO FEHLER KALLO")
                 self.runningFlag = False
                 self.statusBar.showMessage("Connection State: Connection Lost")
                 if self.inMainScreen:

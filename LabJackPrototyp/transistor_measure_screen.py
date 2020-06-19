@@ -20,11 +20,6 @@ if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt
 else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
-"""
-
-canvas = pyqtplt.FigureCanvasAgg(fig)
-canvas.resize(774, canvas.get_width_height()[1])"""
-
 
 
 class TransistorScreen(qt.QWidget):
@@ -94,6 +89,7 @@ class TransistorScreen(qt.QWidget):
             uebergabeData.append(abs(uebergabe[4] - uebergabe[6]))
             uebergabeData.append(abs(uebergabe[5] - uebergabe[7]))
 
+            # TODO ADDING UNIT AND RESISTANCE AS VARIABLE TO CALCULATE IT WITH DIFFERENT UNITS AND RESISTANCE. MAYBE INPUT FIELD UNTER COMBOBOXES
             self.measureData[0].append((abs(uebergabeData[self.measurePorts[0]])) / 200 * 1000)
             self.measureData[1].append((abs(uebergabeData[self.measurePorts[1]])))
             self.measureData[2].append((abs(uebergabeData[self.measurePorts[2]])))
@@ -256,8 +252,6 @@ class TransistorMeasureScreen(qt.QWidget):
 
     def initUI(self):
         layout = qt.QHBoxLayout()
-        #self.fig, axes = plt.subplots(2, 2, gridspec_kw={"hspace": 0, "wspace": 0})
-
 
         self.canvas = pyqtplt.FigureCanvas(fig.Figure())
         axes = self.canvas.figure.subplots(2, 2, gridspec_kw={"hspace": 0, "wspace": 0})
@@ -275,6 +269,7 @@ class TransistorMeasureScreen(qt.QWidget):
 
         self.initAxes()
         self.setLayout(layout)
+
     def animation(self):
         sameLength, arrUeb = self.checkLength()
         print(sameLength)
@@ -285,7 +280,6 @@ class TransistorMeasureScreen(qt.QWidget):
             self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=1)
             self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=1)
             self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=1)
-            self.axes[3].plot(arrUeb[1], arrUeb[2], color="yellow", linestyle="None", marker=".", markersize=1)
 
 
         """for i in range(4):
@@ -306,7 +300,6 @@ class TransistorMeasureScreen(qt.QWidget):
 
         self.axes[0].spines["top"].set_color("none")
         self.axes[0].spines["left"].set_color("none")
-        #self.axes[0].set_xticks([0, 50, 100, 150, 200, 250])
         self.axes[0].set_xlim(0, 200)
         self.axes[0].set_ylim(0, 40)
         self.axes[0].get_xaxis().set_visible(False)
@@ -316,18 +309,18 @@ class TransistorMeasureScreen(qt.QWidget):
         self.axes[1].spines["top"].set_color("none")
         self.axes[1].spines["right"].set_color("none")
         self.axes[1].get_xaxis().set_visible(False)
-        self.axes[1].set_yticks([0, 10, 20, 30])
-        self.axes[1].set_yticklabels(["", 10, 20, 30])
+        self.axes[1].set_yticks([0, 10, 20, 30, 40])
+        self.axes[1].set_yticklabels(["", 10, 20, 30, "Ic"])
         self.axes[1].set_xlim(0, 1.0)
         self.axes[1].set_ylim(0, 40)
         self.axes[1].invert_xaxis()
 
         self.axes[2].spines["bottom"].set_color("none")
         self.axes[2].spines["left"].set_color("none")
-        #self.axes[2].get_yaxis().set_visible(False)
-        self.axes[2].set_xticks([0, 50, 100, 150])
-        self.axes[2].set_xticklabels(["", 50, 100, 150])
-        self.axes[2].set_xlim(0, 200)
+        self.axes[2].get_yaxis().set_visible(False)
+        self.axes[2].set_xticks([0, 50, 100, 150, 200, 220])
+        self.axes[2].set_xticklabels(["", 50, 100, 150, 200, "Ib"])
+        self.axes[2].set_xlim(0, 220)
         self.axes[2].set_ylim(0, 1.0)
         self.axes[2].invert_xaxis()
         self.axes[2].invert_yaxis()
@@ -335,16 +328,14 @@ class TransistorMeasureScreen(qt.QWidget):
 
         self.axes[3].spines["right"].set_color("none")
         self.axes[3].spines["bottom"].set_color("none")
-        self.axes[3].set_xticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-        self.axes[3].set_xticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-        self.axes[3].set_yticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
-        self.axes[3].set_yticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+        self.axes[3].set_xticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        self.axes[3].set_xticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, "Uce"])
+        self.axes[3].set_yticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        self.axes[3].set_yticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, "Ube"])
         self.axes[3].set_xlim(0, 1.0)
         self.axes[3].set_ylim(0, 1.0)
         self.axes[3].invert_yaxis()
         self.axes[3].xaxis.tick_top()
-        #self.axes[3].get_yaxis().set_visible(False)
-
 
     def checkLength(self):
 

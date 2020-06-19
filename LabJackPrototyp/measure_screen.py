@@ -52,8 +52,7 @@ class MeasureScreen(qt.QWidget):
 
         self.mVtoV = 1000
         self.mAtoA = 1000
-
-        # self.initUI()
+        self.uAtoV = 1e6
 
     def initUI(self):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
@@ -92,6 +91,7 @@ class MeasureScreen(qt.QWidget):
 
             for i in range(4):
                 # Da 1000 mV und 1000 Ohm kann Berechnung vernachlässigt werden da 1000 / 1000 = 1
+                #TODO ADDING UNIT AND RESISTANCE AS VARIABLE TO CALCULATE IT WITH DIFFERENT UNITS AND RESISTANCE. MAYBE INPUT FIELD UNTER COMBOBOXES
                 if self.checkboxChecker[i].isChecked():
                     if i <= 1:
                         self.ax_y[i].append(abs(uebergabe[i*2] - uebergabe[i*2+1]))

@@ -46,7 +46,6 @@ class Fenster(qt.QMainWindow):
         self.setCentralWidget(mainScreen)
         #self.takeCentralWidget()
         self.show()
-        print(self.geometry().width())
 
 
     def saveClick(self):
@@ -54,7 +53,6 @@ class Fenster(qt.QMainWindow):
         self.exportScreen.show()
 
     def replaceCentralWidget(self, newWidget):
-        print("H")
         self.takeCentralWidget()
         self.setCentralWidget(newWidget)
 
