@@ -274,12 +274,29 @@ class TransistorMeasureScreen(qt.QWidget):
         sameLength, arrUeb = self.checkLength()
         print(sameLength)
         if sameLength:
+
+            length = len(arrUeb)
+            emptyArr = [None] * length
+            icCross = emptyArr.copy()
+            uceCross = emptyArr.copy()
+            ubeCross = emptyArr.copy()
+            ibCross = emptyArr.copy()
+
+            icCross[-1] = arrUeb[0][-1]
+            uceCross[-1] = arrUeb[1][-1]
+            ubeCross[-1] = arrUeb[2][-1]
+            ibCross[-1] = arrUeb[3][-1]
+
             for ax in self.axes:
                 ax.clear()
             self.initAxes()
             self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=1)
             self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=1)
             self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=1)
+
+            self.axes[0].plot(ibCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
+            self.axes[1].plot(uceCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
+            self.axes[2].plot(ibCross, ubeCross, color="yellow", linestyle="None", marker="X", markersize=4)
 
 
         """for i in range(4):

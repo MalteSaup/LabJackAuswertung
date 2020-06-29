@@ -1,4 +1,5 @@
 import math
+import threading
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
@@ -133,7 +134,8 @@ class MeasureScreen(qt.QWidget):
         except:
             index = -1
         self.checkboxes.comboBox.setEnabled(False)
-        self.measureClock(index)
+        self.t = threading.Thread(target=self.measureClock(index))
+        self.t.start()
 
     def measureClock(self, index=-1):
         self.timer = qtcore.QTimer(self)
@@ -311,6 +313,8 @@ class NormalMeasureScreen(qt.QWidget):
         self.stopped = False
         self.timer = None
 
+        self.colors = ["red", "blue", "green", "yellow"]
+
         self.initUI()
 
     def initUI(self):
@@ -359,9 +363,20 @@ class NormalMeasureScreen(qt.QWidget):
                 self.xue = list(x_ue)
                 self.yue = copy.deepcopy(y_ue)
 
+                length = len(y_ue[0])
+                emptyArr = [None] * length
+
                 for i in range(4):
                     if self.checkboxes[i].isChecked():
-                        self.ax.plot(self.xue, self.yue[i], linestyle=self.ls, marker=self.ms, markersize=0.8)
+                        if self.functionCode == 0:
+                            self.ax.plot(self.xue, self.yue[i], color=self.colors[i], linestyle=self.ls, marker=self.ms, markersize=0.8)
+                        elif self.functionCode == 1:
+                            arrUeb = emptyArr.copy()
+                            if length > 0:
+                               arrUeb[-1] = self.yue[i][-1]
+                            self.ax.plot(self.xue, self.yue[i], color=self.colors[i], linestyle=self.ls, marker=self.ms, markersize=0.8)
+                            self.ax.plot(self.xue, arrUeb.copy(), color=self.colors[i], linestyle="None", marker="X", markersize=4)
+
                 self.canvas.figure.canvas.draw()
 
             else:
