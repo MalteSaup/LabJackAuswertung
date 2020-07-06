@@ -71,7 +71,6 @@ class ExportScreen(qt.QMainWindow):
             if not yTotalEmpty:
                 break
         if not yTotalEmpty:
-
             for i in range(len(y[0])):
                 delete = True
                 for col in y:
@@ -84,7 +83,7 @@ class ExportScreen(qt.QMainWindow):
                 x.pop(deleteArray[i])
                 for col in y:
                     col.pop(deleteArray[i])
-        x, y = self.mergeSort(x, y)
+        #x, y = self.mergeSort(x, y)
         dataFrame = pd.DataFrame()
         dataFrame.insert(0, self.columnName[0], x, True)
         for i in range(len(y)):
@@ -114,61 +113,6 @@ class ExportScreen(qt.QMainWindow):
                 y[-1] = df[col].copy().tolist()
         return x, y
 
-    def mergeSort(self, x, y):
-        cut = int(len(x) / 2)
-        left_x = x[:cut].copy()
-        left_y = self.yCutter(y, cut)
-        if len(left_x) > 1:
-            left_x, left_y = self.mergeSort(left_x, left_y)
-        right_x = x[cut:].copy()
-        right_y = self.yCutter(y, cut, False)
-
-        if len(right_x) > 1:
-            right_x, right_y = self.mergeSort(right_x, right_y)
-        return self.merge(left_x, right_x, left_y, right_y)
-
-
-    def yCutter(self, y, cut, left=True):
-        arrUeb = [[]] * len(y)
-        for i in range(len(y)):
-            if left:
-                arrUeb[i] = y[i][:cut].copy()
-            else:
-                arrUeb[i] = y[i][cut:].copy()
-        return arrUeb
-
-    def merge(self, lx, rx, ly, ry):
-        x_ueb = [None] * (len(lx) + len(rx))
-        y_ueb = []
-        mulArr = [None] * (len(ly[0]) + len(ry[0]))
-        for i in range(len(ly)):
-            y_ueb.append(mulArr.copy())
-        i = 0
-        j = 0
-
-        for numb in range(len(lx) + len(rx)):
-            if i >= len(lx):
-                x_ueb[numb] = rx[j]
-                y_ueb = self.yMergeHelper(y_ueb, ry, numb, j)
-                j += 1
-            elif j >= len(rx):
-                x_ueb[numb] = lx[i]
-                y_ueb = self.yMergeHelper(y_ueb, ly, numb, i)
-                i += 1
-            elif lx[i] <= rx[j]:
-                x_ueb[numb] = lx[i]
-                y_ueb = self.yMergeHelper(y_ueb, ly, numb, i)
-                i += 1
-            else:
-                x_ueb[numb] = rx[j]
-                y_ueb = self.yMergeHelper(y_ueb, ry, numb, j)
-                j += 1
-        return x_ueb, y_ueb
-
-    def yMergeHelper(self, arrUeb, y, numb, pos):
-        for i in range(len(arrUeb)):
-            arrUeb[i][numb] = y[i][pos]
-        return arrUeb
 
     def sampleDown(self, df, sampleCount, customColNames=None):
         x_ueb = []
