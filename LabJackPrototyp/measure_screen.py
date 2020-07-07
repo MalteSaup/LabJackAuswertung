@@ -112,7 +112,7 @@ class MeasureScreen(qt.QWidget):
                     self.ax_x.append(abs(uebergabe[4] - uebergabe[6]) * self.mVtoV)
                 elif index == 3:
                     self.ax_x.append(abs(uebergabe[5] - uebergabe[7]) * self.mVtoV)
-
+            print(self.ax_y[3][-1])
 
 
 
