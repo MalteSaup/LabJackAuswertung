@@ -160,7 +160,7 @@ class MeasureScreen(qt.QWidget):
             self.pltLayout.timer.stop()
 
         self.pltLayout.stopped = True
-        self.supportClass.returnMainScreen()
+        self.supportClass.returnToMainScreen()
 
     def createExportData(self):
         if self.pltLayout.checkXYLength()[0]:

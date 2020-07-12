@@ -1,4 +1,5 @@
 import os
+import sys
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
@@ -17,8 +18,18 @@ class Fenster(qt.QMainWindow):
         self.layout = None
         self.initUI()
         self.supportClass = None
+        self.inMeasureScreen = False
+
 
     def initUI(self):
+        options = [
+            "None",
+            "Kanal 1",
+            "Kanal 2",
+            "Kanal 3",
+            "Kanal 4"
+        ]
+
         self.setWindowTitle("HAW LabJack")
         self.setWindowIcon(qtgui.QIcon("icon.ico"))
         self.statusBar().showMessage("Connection State: Not Connected")
@@ -38,7 +49,7 @@ class Fenster(qt.QMainWindow):
         self.file.addAction(self.openAction)
         self.file.addAction(self.saveAction)
 
-        self.supportClass = support_class.SupportClass(self.statusBar(), self)
+        self.supportClass = support_class.SupportClass(self.statusBar(), self, options, dpi)
 
         mainScreen = main_screen.MainScreen(self.supportClass)
         mainScreen.initUI()
@@ -46,7 +57,6 @@ class Fenster(qt.QMainWindow):
         self.setCentralWidget(mainScreen)
         #self.takeCentralWidget()
         self.show()
-
 
     def saveClick(self):
         self.exportScreen = export_screen.ExportScreen(self)
@@ -56,9 +66,17 @@ class Fenster(qt.QMainWindow):
         self.takeCentralWidget()
         self.setCentralWidget(newWidget)
 
+    def resizeTransistorScreen(self):
+        if self.supportClass.inMeasureScreen:
+            self.supportClass.currentScreen.resizeWidgets()
 
+
+global dpi
 
 app = qt.QApplication([])
+screen = app.screens()[0]
+dpi = screen.physicalDotsPerInch()
+
 w = Fenster()
 
 os._exit(app.exec_())

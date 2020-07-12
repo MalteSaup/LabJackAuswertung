@@ -15,6 +15,9 @@ import matplotlib.figure as fig
 import matplotlib.pyplot as plt
 
 import export_screen
+import settings_screen
+import transistor_measure_screen_widget as tmsw
+import transistor_measure_screen_settings_widget as tmssw
 
 if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt
@@ -25,27 +28,42 @@ else:
 class TransistorScreen(qt.QWidget):
     def __init__(self, supportClass):
         super().__init__()
+
         plt.style.use("dark_background")
         plt.tight_layout()
 
         self.supportClass = supportClass
         self.sampleratePerSecond = 25
+        self.uceUbeStepCount = 9
 
         self.columnNames = ["Measure Point", "IC", "UCE", "UBE", "IB"]
 
-        self.tb = 0
+        self.measureSettings = self.supportClass.measureSettings
 
         self.measureData = [[], [], [], []]
-        self.measurePorts = None
+        self.measurePorts = self.measureSettings.measurePorts
         self.measurePointForMeasureData = []
 
         self.t = None
 
-        self.r1 = 1e5
-        self.r2 = 200
+        self.r1 = self.measureSettings.r1
+        self.r2 = self.measureSettings.r2
+
+        self.ubeMin = self.measureSettings.ubeMin
+        self.ubeMax = self.measureSettings.ubeMax
+        self.uceMin = self.measureSettings.uceMin
+        self.uceMax = self.measureSettings.uceMax
+
+        self.uceTicks = []
+        self.uceTicksLabel = []
+
+        self.ubeTicks = []
+        self.ubeTicksLabel = []
 
         self.milli = 1000
         self.mikro = 1e6
+
+        self.minWidthLBH = 190
 
         self.notStopped = True
 
@@ -57,37 +75,65 @@ class TransistorScreen(qt.QWidget):
         self.stopped = False
 
     def initUI(self):
+
+        #print(self.supportClass.measureSettings.toString())
+
+        self.createUceUbeTicks()
+
         layout = qt.QHBoxLayout()
-        self.cbh = ComboBoxHolder()
-        self.plt = TransistorMeasureScreen(self.measureData)
-        layout.addWidget(self.cbh)
+        self.lbh = tmssw.LabelHolder(self.supportClass.options, self.measurePorts)
+        self.plt = tmsw.TransistorMeasureScreenWidget(self.measureData, [self.uceMin, self.uceMax], [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel, self.ubeTicks, self.ubeTicksLabel)
+        layout.addWidget(self.lbh)
         layout.addWidget(self.plt)
-        self.samplerate = 1000 / self.sampleratePerSecond
+        layout.setAlignment(self.plt, qtcore.Qt.AlignRight)
+        self.samplerate = int(1000 / self.sampleratePerSecond)
         self.setLayout(layout)
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
 
-        self.cbh.returnButton.pressed.connect(self.returnToMainScreen)
-        self.cbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
-        self.cbh.addMeasurePointButton.pressed.connect(self.addMeasurePoint)
+        self.lbh.returnButton.pressed.connect(self.supportClass.returnToSettingsScreen)
+        self.lbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
+        self.lbh.addMeasurePointButton.pressed.connect(self.addMeasurePoint)
 
-        # for i in range(len(self.cbh.comboBoxes)):
-        #    self.cbh.comboBoxes[i].currentIndexChanged.connect(lambda x=i: self.comboBoxChecker(x))
+
+        self.lbh.setFixedWidth(self.minWidthLBH)
+        self.plt.resize(self.supportClass.container.geometry().width() * 0.8, self.supportClass.container.geometry().height() * 0.9)
 
         self.show()
-        self.plt.canvas.resize(774, 424)
 
-    def comboBoxChecker(self, numb):
-        currentIndexe = []
-        for i in range(len(self.cbh.comboBoxes)):
-            if self.cbh.comboBoxes[i].currentIndex() != 0:
-                currentIndexe.append([i, self.cbh.comboBoxes[i].currentIndex()])
-        for i in range(len(self.cbh.comboBoxes)):
-            for j in range(self.cbh.comboBoxes[i].count()):
-                self.cbh.comboBoxes[i].model().item(j).setEnabled(True)
-            for index in currentIndexe:
-                if i != index[0]:
-                    self.cbh.comboBoxes[i].model().item(index[1]).setEnabled(False)
+        qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
+
+    def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
+        self.resizeWidgets()
+        super().resizeEvent(a0)
+
+    def resizeWidgets(self):
+        width = self.supportClass.container.geometry().width()
+        height = self.supportClass.container.geometry().height() * 0.9
+        if (width / 5) < self.minWidthLBH:
+            newWidthCanvas = width - self.minWidthLBH
+        else:
+            newWidthCanvas = width * 4 / 5
+        self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
+
+
+    def createUceUbeTicks(self):
+        uceStep = round((self.uceMax - self.uceMin) / self.uceUbeStepCount, 1)
+        ubeStep = round((self.ubeMax - self.ubeMin) / self.uceUbeStepCount, 1)
+
+        for i in range(self.uceUbeStepCount+1):
+            self.uceTicks.append(round(self.uceMin + uceStep * i, 2))
+            self.ubeTicks.append(round(self.ubeMin + ubeStep * i, 2))
+            if self.uceUbeStepCount > i > 0:
+                self.uceTicksLabel.append(str(round(self.uceTicks[-1], 2)))
+                self.ubeTicksLabel.append(str(round(self.ubeTicks[-1], 2)))
+            elif i == 0:
+                self.uceTicksLabel.append("")
+                self.ubeTicksLabel.append("")
+            elif i == self.uceUbeStepCount:
+                self.uceTicksLabel.append("UCE")
+                self.ubeTicksLabel.append("UBE")
+
 
     def updateDataset(self):
         if self.notStopped and not self.stopped:
@@ -104,13 +150,11 @@ class TransistorScreen(qt.QWidget):
             self.measureData[2].append((abs(uebergabeData[self.measurePorts[2]])))
             self.measureData[3].append((abs(uebergabeData[self.measurePorts[3]])) / self.r1 * self.mikro)
 
-            #print(self.measureData[2][-1])
-
     def addMeasurePoint(self):
         if self.notStopped:
             self.measurePointCount += 1
-            self.cbh.measurePointsLabel.setText("Measure Points: " + str(self.measurePointCount))
-            self.plt.canvas.resize(774, 424)
+            self.lbh.measurePointsValueLabel.setText(str(self.measurePointCount))
+            self.resizeWidgets()
 
     def startMeasureButtonPressed(self):
         if not self.running:
@@ -121,25 +165,26 @@ class TransistorScreen(qt.QWidget):
             self.running = False
 
     def startMeasure(self):
-        self.measurePorts = [self.cbh.comboBoxes[1].currentIndex() - 1, self.cbh.comboBoxes[2].currentIndex() - 1,
-                             self.cbh.comboBoxes[3].currentIndex() - 1, self.cbh.comboBoxes[0].currentIndex() - 1]
-        for comboBox in self.cbh.comboBoxes:
-            comboBox.setEnabled(False)
+        self.measurePorts = self.measurePorts
         print(self.measurePorts)
+
         self.stopped = False
-        self.cbh.startMeasureButton.setText("Stop Measure")
-        # TODO BEHAVIOUR CHECK WHEN ONE COMBOBOX HAS NO VALUE
+
+        self.lbh.startMeasureButton.setText("Stop Measure")
+
         self.t = threading.Thread(target=self.measureClock())
         self.t.start()
 
     def stopMeasure(self):
-        self.cbh.startMeasureButton.setText("Start Measure")
+        self.lbh.startMeasureButton.setText("Start Measure")
+
         self.stopped = True
+
         b = self.calcB()
         uearly = self.calcUEarly()
 
-        self.cbh.bLabel.setText("B: " + str(b))
-        self.cbh.uEarlyLabel.setText("UEarly: " + str(uearly) + "V")
+        self.lbh.bValueLabel.setText(str(b))
+        self.lbh.uEarlyValueLabel.setText(str(uearly) + "V")
 
     def measureClock(self):
         self.timer = qtcore.QTimer(self)
@@ -256,7 +301,7 @@ class TransistorScreen(qt.QWidget):
             self.plt.timer.stop()
 
         self.stopped = True
-        self.supportClass.returnMainScreen()
+        self.supportClass.returnToMainScreen()
 
     def createExportData(self):
         if self.plt.checkLength()[0]:
@@ -277,226 +322,3 @@ class TransistorScreen(qt.QWidget):
             timerCreateExData.setSingleShot(True)
             timerCreateExData.start(100)
             return None, None
-
-
-class ComboBoxHolder(qt.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.options = [
-            "None",
-            "Kanal 1",
-            "Kanal 2",
-            "Kanal 3",
-            "Kanal 4"
-        ]
-        self.comboBoxes = []
-        self.measurePointsLabel = None
-        self.returnButton = None
-        self.startMeasureButton = None
-        self.addMeasurePointButton = None
-        self.bLabel = None
-        self.uEarlyLabel = None
-
-        self.initUI()
-
-    def initUI(self):
-        layout = qt.QVBoxLayout()
-
-        # Creation Combo Boxes
-        cb_ib = qt.QComboBox()
-        cb_ic = qt.QComboBox()
-        cb_uce = qt.QComboBox()
-        cb_ube = qt.QComboBox()
-
-        for option in self.options:
-            cb_ib.addItem(option)
-            cb_ic.addItem(option)
-            cb_uce.addItem(option)
-            cb_ube.addItem(option)
-
-        self.comboBoxes.append(cb_ib)
-        self.comboBoxes.append(cb_ic)
-        self.comboBoxes.append(cb_uce)
-        self.comboBoxes.append(cb_ube)
-
-        # Layouting Combo Boxes with Widgets and Layouts
-        w_ib = qt.QWidget()
-        w_ic = qt.QWidget()
-        w_uce = qt.QWidget()
-        w_ube = qt.QWidget()
-
-        layout_ib = qt.QHBoxLayout()
-        layout_ic = qt.QHBoxLayout()
-        layout_uce = qt.QHBoxLayout()
-        layout_ube = qt.QHBoxLayout()
-
-        layout_ib.addWidget(qt.QLabel("IB"))
-        layout_ic.addWidget(qt.QLabel("IC"))
-        layout_uce.addWidget(qt.QLabel("UCE"))
-        layout_ube.addWidget(qt.QLabel("UCB"))
-
-        layout_ib.addWidget(cb_ib)
-        layout_ic.addWidget(cb_ic)
-        layout_uce.addWidget(cb_uce)
-        layout_ube.addWidget(cb_ube)
-
-        w_ib.setLayout(layout_ib)
-        w_ic.setLayout(layout_ic)
-        w_uce.setLayout(layout_uce)
-        w_ube.setLayout(layout_ube)
-
-        # Adding Widgets
-        layout.addWidget(w_ib)
-        layout.addWidget(w_ic)
-        layout.addWidget(w_uce)
-        layout.addWidget(w_ube)
-
-        self.measurePointsLabel = qt.QLabel("Measure Points: 1")
-        self.bLabel = qt.QLabel("B: -")
-        self.uEarlyLabel = qt.QLabel("UEarly: -")
-
-
-        labelLayout = qt.QVBoxLayout()
-
-        labelLayout.addWidget(self.measurePointsLabel)
-        labelLayout.addWidget(self.bLabel)
-        labelLayout.addWidget(self.uEarlyLabel)
-
-        labelLayout.setSpacing(0)
-        labelLayout.setContentsMargins(0, 0, 0, 0)
-
-        measurePointsWidget = qt.QWidget()
-        measurePointsWidget.setLayout(labelLayout)
-
-        self.startMeasureButton = qt.QPushButton("Start Measure")
-        self.addMeasurePointButton = qt.QPushButton("Add Measure Point")
-        self.returnButton = qt.QPushButton("Return")
-
-        layout.addWidget(self.startMeasureButton)
-        layout.addWidget(self.addMeasurePointButton)
-        layout.addWidget(self.returnButton)
-        layout.addWidget(measurePointsWidget)
-
-        self.setLayout(layout)
-
-
-class TransistorMeasureScreen(qt.QWidget):
-    def __init__(self, measureData):
-        super().__init__()
-
-        self.stopped = False
-
-        self.axes = None
-        self.fig = None
-
-        self.timer = None
-
-        self.canvas = None
-
-        self.measureData = measureData
-
-        self.initUI()
-
-    def initUI(self):
-        layout = qt.QHBoxLayout()
-
-        self.canvas = pyqtplt.FigureCanvas(fig.Figure())
-        axes = self.canvas.figure.subplots(2, 2, gridspec_kw={"hspace": 0, "wspace": 0})
-        self.timer = self.canvas.new_timer(250)
-        self.timer.add_callback(self.animation)
-
-        self.canvas.figure.set_size_inches(4, 4, True)
-
-        layout.addWidget(self.canvas)
-
-        (ax1, ax2), (ax3, ax4) = axes
-
-        self.axes = [ax1, ax2, ax3, ax4]
-        layout.addWidget(self.canvas)
-
-        self.initAxes()
-        self.setLayout(layout)
-
-    def animation(self):
-        sameLength, arrUeb = self.checkLength()
-        #print(sameLength)
-        if sameLength:
-
-            length = len(arrUeb)
-            emptyArr = [None] * length
-            icCross = emptyArr.copy()
-            uceCross = emptyArr.copy()
-            ubeCross = emptyArr.copy()
-            ibCross = emptyArr.copy()
-
-            icCross[-1] = arrUeb[0][-1]
-            uceCross[-1] = arrUeb[1][-1]
-            ubeCross[-1] = arrUeb[2][-1]
-            ibCross[-1] = arrUeb[3][-1]
-
-            for ax in self.axes:
-                ax.clear()
-            self.initAxes()
-            self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=1)
-            self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=1)
-            self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=1)
-
-            self.axes[0].plot(ibCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
-            self.axes[1].plot(uceCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
-            self.axes[2].plot(ibCross, ubeCross, color="yellow", linestyle="None", marker="X", markersize=4)
-
-        self.canvas.figure.canvas.draw()
-
-    def initAxes(self):
-        self.axes[0].spines["top"].set_color("none")
-        self.axes[0].spines["left"].set_color("none")
-        self.axes[0].set_xlim(0, 200)
-        self.axes[0].set_ylim(0, 40)
-        self.axes[0].get_xaxis().set_visible(False)
-        self.axes[0].get_yaxis().set_visible(False)
-        self.axes[0].invert_xaxis()
-
-        self.axes[1].spines["top"].set_color("none")
-        self.axes[1].spines["right"].set_color("none")
-        self.axes[1].set_yticks([0, 10, 20, 30, 40])
-        self.axes[1].set_yticklabels(["", 10, 20, 30, "Ic"])
-        self.axes[1].set_xlim(0, 12)
-        self.axes[1].set_ylim(0, 40)
-        self.axes[1].get_xaxis().set_visible(False)
-
-        self.axes[2].spines["bottom"].set_color("none")
-        self.axes[2].spines["left"].set_color("none")
-        self.axes[2].get_yaxis().set_visible(False)
-        self.axes[2].set_xticks([0, 50, 100, 150, 200, 220])
-        self.axes[2].set_xticklabels(["", 50, 100, 150, 200, "Ib"])
-        self.axes[2].set_xlim(0, 220)
-        self.axes[2].set_ylim(0, 1.0)
-        self.axes[2].invert_xaxis()
-        self.axes[2].invert_yaxis()
-        self.axes[2].xaxis.tick_top()
-
-        self.axes[3].spines["right"].set_color("none")
-        self.axes[3].spines["bottom"].set_color("none")
-        self.axes[3].set_xticks([0, 1, 2, 3, 5, 7, 9, 11, 12])
-        self.axes[3].set_xticklabels(["", 1, 2, 3, 5, 7, 9, 11, "Uce"])
-        self.axes[3].set_yticks([0, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-        self.axes[3].set_yticklabels(["", 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, "Ube"])
-        self.axes[3].set_xlim(0, 12)
-        self.axes[3].set_ylim(0, 1.0)
-        self.axes[3].invert_yaxis()
-        self.axes[3].xaxis.tick_top()
-
-
-
-    def checkLength(self):
-
-        arr_ueb = copy.deepcopy(self.measureData)
-
-        length = len(arr_ueb[0])
-
-        sameLength = True
-
-        for i in range(len(arr_ueb)):
-            if not length == len(arr_ueb[i]):
-                sameLength = False
-        return sameLength, arr_ueb
