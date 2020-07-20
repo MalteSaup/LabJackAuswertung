@@ -18,6 +18,9 @@ import export_screen
 import settings_screen
 import transistor_measure_screen_widget as tmsw
 import transistor_measure_screen_settings_widget as tmssw
+import transistor_measure_scree_calc_widget as tmscw
+import transistor_measure_screen_calc_result_widget as tmscrw
+import calculate
 
 if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt
@@ -35,6 +38,10 @@ class TransistorScreen(qt.QWidget):
         self.supportClass = supportClass
         self.sampleratePerSecond = 25
         self.uceUbeStepCount = 9
+
+        self.plt = None
+        self.lbh = None
+        self.tcw = None
 
         self.columnNames = ["Measure Point", "IC", "UCE", "UBE", "IB"]
 
@@ -63,7 +70,7 @@ class TransistorScreen(qt.QWidget):
         self.milli = 1000
         self.mikro = 1e6
 
-        self.minWidthLBH = 190
+        self.minWidthWidget = 190
 
         self.notStopped = True
 
@@ -74,20 +81,28 @@ class TransistorScreen(qt.QWidget):
         self.running = False
         self.stopped = False
 
+        self.layout = None
+
+        self.settingWidgets = 1
+
+        self.calculator = calculate.Calculator()
+
     def initUI(self):
 
         #print(self.supportClass.measureSettings.toString())
 
         self.createUceUbeTicks()
 
-        layout = qt.QHBoxLayout()
+        self.layout = qt.QGridLayout()
         self.lbh = tmssw.LabelHolder(self.supportClass.options, self.measurePorts)
+        #self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
         self.plt = tmsw.TransistorMeasureScreenWidget(self.measureData, [self.uceMin, self.uceMax], [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel, self.ubeTicks, self.ubeTicksLabel)
-        layout.addWidget(self.lbh)
-        layout.addWidget(self.plt)
-        layout.setAlignment(self.plt, qtcore.Qt.AlignRight)
+        self.layout.addWidget(self.lbh, 0, 0)
+        self.layout.addWidget(self.tcw, 0, 1)
+        self.layout.addWidget(self.plt, 0, 2)
+        self.layout.setAlignment(self.plt, qtcore.Qt.AlignRight)
         self.samplerate = int(1000 / self.sampleratePerSecond)
-        self.setLayout(layout)
+        self.setLayout(self.layout)
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
 
@@ -95,13 +110,11 @@ class TransistorScreen(qt.QWidget):
         self.lbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
         self.lbh.addMeasurePointButton.pressed.connect(self.addMeasurePoint)
 
-
-        self.lbh.setFixedWidth(self.minWidthLBH)
-        self.plt.resize(self.supportClass.container.geometry().width() * 0.8, self.supportClass.container.geometry().height() * 0.9)
-
+        self.lbh.setFixedWidth(self.minWidthWidget)
+        self.plt.resize(self.minWidthWidget, self.supportClass.container.geometry().height() * 0.9)
         self.show()
 
-        qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
+        qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
         self.resizeWidgets()
@@ -110,11 +123,12 @@ class TransistorScreen(qt.QWidget):
     def resizeWidgets(self):
         width = self.supportClass.container.geometry().width()
         height = self.supportClass.container.geometry().height() * 0.9
-        if (width / 5) < self.minWidthLBH:
-            newWidthCanvas = width - self.minWidthLBH
+        if (width / 5) < self.minWidthWidget * self.settingWidgets:
+            newWidthCanvas = width - self.minWidthWidget * self.settingWidgets
         else:
             newWidthCanvas = width * 4 / 5
-        self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
+        if self.plt is not None:
+            self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
 
     def createUceUbeTicks(self):
@@ -156,6 +170,10 @@ class TransistorScreen(qt.QWidget):
             self.lbh.measurePointsValueLabel.setText(str(self.measurePointCount))
             self.resizeWidgets()
 
+    def addCalcResults(self, measurePoint, amount, b, uearly):
+        resultWidget = tmscrw.CalcResultWidget(measurePoint, b, uearly, amount)
+        self.tcw.calcResultHolder.layout.addWidget(resultWidget)
+
     def startMeasureButtonPressed(self):
         if not self.running:
             self.startMeasure()
@@ -167,6 +185,13 @@ class TransistorScreen(qt.QWidget):
     def startMeasure(self):
         self.measurePorts = self.measurePorts
         print(self.measurePorts)
+
+        if self.tcw is not None:
+            self.tcw.setParent(None)
+            self.tcw = None
+
+        self.settingWidgets = 1
+        qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
 
         self.stopped = False
 
@@ -180,11 +205,14 @@ class TransistorScreen(qt.QWidget):
 
         self.stopped = True
 
-        b = self.calcB()
-        uearly = self.calcUEarly()
+        self.tcw = tmscw.TransistorMeasureScreenCalcWidget(self.measurePointCount)
+        self.layout.addWidget(self.tcw, 0, 1)
+        self.tcw.setFixedWidth(self.minWidthWidget)
+        self.settingWidgets = 2
 
-        self.lbh.bValueLabel.setText(str(b))
-        self.lbh.uEarlyValueLabel.setText(str(uearly) + "V")
+        self.initTCW()
+
+        qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
 
     def measureClock(self):
         self.timer = qtcore.QTimer(self)
@@ -202,93 +230,74 @@ class TransistorScreen(qt.QWidget):
             self.exportScreen = export_screen.ExportScreen(df, fig, self.columnNames)
             self.exportScreen.show()
 
-    def calcB(self):
-        calcArr = []
-        ic = list(self.measureData[0])
-        ib = list(self.measureData[3])
-
-        for i in range(len(ic)):
-            calcArr.append((ic[i] * 1000) / ib[i])
-        upperCutter = True
-        lowerCutter = True
-        while upperCutter:
-            calArr, upperCutter, arr = self.upperLowerCutter(calcArr, True)
-        while lowerCutter:
-            calArr, lowerCutter, arr = self.upperLowerCutter(calcArr, False)
-
-        durchschnitt = 0
-        for i in calcArr:
-            durchschnitt += i
-        return round(durchschnitt / len(calcArr), 3)
-
-    def calcUEarly(self):
-        ic = list(self.measureData[0])
-        uce = list(self.measureData[1])
-
-        u1 = None
-        u2 = None
-        i1 = None
-        i2 = None
-
-        maxBeforeProblem = self.getUceProblemMax(uce, ic)
-        print(maxBeforeProblem)
-        for i in range(len(uce)):
-            if uce[i] >= 2.5 and uce[i] < 3 and u1 is None:
-                u1 = uce[i]
-                i1 = ic[i]
-            if uce[i] >= 6.5 and uce[i] < 8 and u2 is None:
-                u2 = uce[i]
-                i2 = ic[i]
-            if u1 is not None and u2 is not None:
-                break
-        if u1 is None or u2 is None:
-            print("not enough measure values")
-            return "-0"
-
-        print("U1: " + str(u1) + " I1: " + str(i1) + " U2: " + str(u2) + " I2: " + str(i2))
-
-        uearly = ((u1*i2)-(u2*i1))/(i2-i1)
-        return round(uearly, 4)
-
-    def getUceProblemMax(self, uce, ic):
-        valueSampleList = []
-        for i in range(len(uce)):
-            uceSample = round(uce[i], 2)
-            try:
-                valueSampleList[0].index(uceSample)
-            except:
-                valueSampleList.append([uceSample, round(ic[i], 2)])
-        valueSampleList = sorted(valueSampleList, key=lambda x: x[0])
-        prevValue = -10
-        problemValue = None
-        for i in valueSampleList:
-            if prevValue > i[1]:
-                if problemValue is None:
-                    problemValue = i[1]
-                elif problemValue > i[1]:
-                    problemValue = i[1]
+    def calcClick(self):
+        measurePoint = self.tcw.chooseDropDown.currentIndex()
+        uce = None
+        ic = None
+        ib = None
+        if measurePoint == 1:
+            uce = self.measureData[1]
+            ic = self.measureData[0]
+            ib = self.measureData[3]
+        elif measurePoint == 0:
+            self.calcAll()
+        else:
+            if measurePoint - 1 == 1:
+                lower = 0
+                try:
+                    upper = self.measurePointForMeasureData.index(measurePoint)
+                except:
+                    upper = None
             else:
-                prevValue = i[1]
-        return problemValue
+                lower = self.measurePointForMeasureData.index(measurePoint - 2)
+                try:
+                    upper = self.measurePointForMeasureData.index(measurePoint)
+                except:
+                    upper = None
 
-    def upperLowerCutter(self, arr, up=False):
-        deletedValues = False
-        valueArr = []
-        arrMax = max(arr)
-        for i in arr:
-            if up:
-                if i >= arrMax * 0.9:
-                    valueArr.append(i)
+            uce = self.measureData[1][lower:upper]
+            ic = self.measureData[0][lower:upper]
+            ib = self.measureData[3][lower:upper]
+        if uce is None or ic is None or ib is None:
+            print("ERROR WITH VALUE INIT")
+            return
+        uearly, n = self.calculator.leastSquare(uce, ic)
+        b = self.calculator.calcB(ic, ib)
+        if uearly is None:
+            print("ERROR IN UEALRY CALC")
+            return
+        if measurePoint == 0:
+            measureText = "All Values"
+        else:
+            measureText = str(measurePoint-1)
+        self.addCalcResults(measureText, len(uce), b, uearly)
+
+    def calcAll(self):
+        lower = 0
+        upper = 0
+        for i in range(1, self.measurePointCount+1):
+            if i - 1 == 0:
+                try:
+                    upper = self.measurePointForMeasureData.index(i+1)
+                except:
+                    upper = None
             else:
-                if i <= arrMax * 0.1:
-                    valueArr.append(i)
+                lower = upper
+                try:
+                    upper = self.measurePointForMeasureData.index(i+1)
+                except:
+                    upper = None
+            uce = self.measureData[1][lower:upper]
+            ic = self.measureData[0][lower:upper]
+            ib = self.measureData[3][lower:upper]
 
-        if len(valueArr) < len(arr) * 0.1 and len(valueArr) != 0:
-            deletedValues = True
-            for delVal in valueArr[::-1]:
-                #print(delVal)
-                arr.pop(arr.index(delVal))
-        return arr, deletedValues, len(valueArr)
+            uearly, n = self.calculator.leastSquare(uce, ic)
+            b = self.calculator.calcB(ic, ib)
+            if uearly is None:
+                print("ERROR IN UEALRY CALC")
+                return
+
+            self.addCalcResults(str(i), len(uce), b, uearly)
 
     def returnToMainScreen(self):
         if self.timer is not None:
@@ -322,3 +331,6 @@ class TransistorScreen(qt.QWidget):
             timerCreateExData.setSingleShot(True)
             timerCreateExData.start(100)
             return None, None
+
+    def initTCW(self):
+        self.tcw.calcButton.pressed.connect(self.calcClick)

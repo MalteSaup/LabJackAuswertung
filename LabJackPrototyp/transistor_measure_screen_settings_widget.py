@@ -6,7 +6,6 @@ import PyQt5.QtCore as qtcore
 class LabelHolder(qt.QWidget):
     def __init__(self, options, measurePorts):
         super().__init__()
-        self.comboBoxes = []
         self.measurePointsValueLabel = None
         self.returnButton = None
         self.startMeasureButton = None
