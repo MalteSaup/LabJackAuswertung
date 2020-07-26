@@ -55,6 +55,8 @@ class MeasureScreen(qt.QWidget):
         self.mAtoA = 1000
         self.uAtoV = 1e6
 
+        self.minWidthWidget = 190
+
     def initUI(self):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
@@ -84,7 +86,23 @@ class MeasureScreen(qt.QWidget):
             self.checkboxes.comboBox.currentIndexChanged.connect(self.checkboxLayoutManipulator)
             self.checkboxes.startMeasureButton.pressed.connect(self.startMeasure)
 
+        self.checkboxes.setFixedWidth(self.minWidthWidget)
+        qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
         self.setLayout(layout)
+
+    def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
+        self.resizeWidgets()
+        super().resizeEvent(a0)
+
+    def resizeWidgets(self):
+        width = self.supportClass.container.geometry().width()
+        height = self.supportClass.container.geometry().height() * 0.9
+        if (width / 5) < self.minWidthWidget:
+            newWidthCanvas = width - self.minWidthWidget
+        else:
+            newWidthCanvas = width * 4 / 5
+        if self.pltLayout is not None:
+            self.pltLayout.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
     def updateDataset(self, index):
         if self.notStopped:

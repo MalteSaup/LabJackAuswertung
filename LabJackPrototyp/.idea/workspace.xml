@@ -20,12 +20,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="beaaf3f2-f8c9-41b0-a311-0b855b5ac80c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/calculate.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/transistor_measure_scree_calc_widget.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/transistor_measure_screen_calc_result_widget.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/transistor_measure_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/transistor_measure_screen.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/transistor_measure_screen_settings_widget.py" beforeDir="false" afterPath="$PROJECT_DIR$/transistor_measure_screen_settings_widget.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/measure_screen.py" beforeDir="false" afterPath="$PROJECT_DIR$/measure_screen.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
