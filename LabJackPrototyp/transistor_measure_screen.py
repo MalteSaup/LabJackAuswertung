@@ -232,6 +232,7 @@ class TransistorScreen(qt.QWidget):
 
     def calcClick(self):
         measurePoint = self.tcw.chooseDropDown.currentIndex()
+        print(measurePoint)
         uce = None
         ic = None
         ib = None
@@ -242,8 +243,9 @@ class TransistorScreen(qt.QWidget):
         elif measurePoint == 0:
             self.calcAll()
         else:
+            lower = 0
+            upper = 0
             if measurePoint - 1 == 1:
-                lower = 0
                 try:
                     upper = self.measurePointForMeasureData.index(measurePoint)
                 except:
@@ -254,7 +256,8 @@ class TransistorScreen(qt.QWidget):
                     upper = self.measurePointForMeasureData.index(measurePoint)
                 except:
                     upper = None
-
+            print("u" + str(upper))
+            print("l" + str(lower))
             uce = self.measureData[1][lower:upper]
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
@@ -262,10 +265,10 @@ class TransistorScreen(qt.QWidget):
             print("ERROR WITH VALUE INIT")
             return
         uearly, n = self.calculator.leastSquare(uce, ic)
-        b = self.calculator.calcB(ic, ib)
+        b = self.calculator.calcB(self.measureData[0], self.measureData[3])
         if uearly is None:
             print("ERROR IN UEALRY CALC")
-            return
+            uearly = "ERROR"
         if measurePoint == 0:
             measureText = "All Values"
         else:
@@ -280,13 +283,17 @@ class TransistorScreen(qt.QWidget):
                 try:
                     upper = self.measurePointForMeasureData.index(i+1)
                 except:
-                    upper = None
+                    upper = len(self.measurePointForMeasureData) - 1
             else:
                 lower = upper
                 try:
                     upper = self.measurePointForMeasureData.index(i+1)
                 except:
                     upper = None
+
+            print("L" + str(lower))
+            print("U" + str(upper))
+
             uce = self.measureData[1][lower:upper]
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
@@ -295,7 +302,7 @@ class TransistorScreen(qt.QWidget):
             b = self.calculator.calcB(ic, ib)
             if uearly is None:
                 print("ERROR IN UEALRY CALC")
-                return
+                uearly = "ERROR"
 
             self.addCalcResults(str(i), len(uce), b, uearly)
 

@@ -22,8 +22,15 @@ class Calculator:
         indexIcMax = arr2.index(icMax)
         uceIcMax = aSA[indexIcMax]
         uceIcLower = uceIcMax * 0.5
+
+        print("UCICMAX: " + str(uceIcMax) + " INDEX: " + str(indexIcMax))
+        print("UCICMIN: " + str(uceIcLower) + " LEN: " + str(len(aSA)))
+
+        print(uceIcLower - (uceIcLower * 0.1))
+        print(uceIcLower + (uceIcMax - uceIcLower) * 0.4)
+
         for i in range(len(aSA)):
-            if aSA[i] > uceIcLower - 0.02 and arr2[i] < uceIcLower + 0.1:
+            if aSA[i] > uceIcLower - (uceIcLower * 0.1) and aSA[i] < (uceIcLower + (uceIcMax - uceIcLower) * 0.4):
                 return i, indexIcMax
         return None, None
 
@@ -42,6 +49,9 @@ class Calculator:
 
         if borders is None:
             lower, upper = self.getBorders(arrSortedAfter, arr2)
+            if upper is None:
+                print("Upper is None, Measure Problem?")
+                return None, None
             if lower == upper and upper > 0:
                 lower = 0
         else:
@@ -58,6 +68,9 @@ class Calculator:
 
         aSACutted = arrSortedAfter[lower:upper]
         arr2Cutted = arr2[lower:upper]
+
+        print(aSACutted)
+        print("LOWER: " + str(lower) + " UPPER: " + str(upper))
 
         aSAAverage = self.getAverage(aSACutted)
         arr2Average = self.getAverage(arr2Cutted)
