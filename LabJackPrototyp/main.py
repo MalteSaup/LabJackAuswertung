@@ -1,15 +1,10 @@
 import os
-import sys
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
-import PyQt5.QtCore as qtcore
-
-import pandas as pd
 
 import main_screen
 import support_class
-import measure_screen
 import export_screen
 
 class Fenster(qt.QMainWindow):
@@ -69,7 +64,6 @@ class Fenster(qt.QMainWindow):
     def resizeTransistorScreen(self):
         if self.supportClass.inMeasureScreen:
             self.supportClass.currentScreen.resizeWidgets()
-
 
 global dpi
 

@@ -1,18 +1,15 @@
 import u6
 import threading
 import time
-import sys
 
-import measure_screen
+from measureScreen import measure_screen
 import main_screen
-import transistor_measure_screen
+from transistorMeasureScreen import transistor_measure_screen
 import settings_screen
 import measure_settings
 
-
 class SupportClass:
     def __init__(self, statusBar, container, options, dpi):
-
 
         self.device = None
         self.runningFlag = False
@@ -21,6 +18,8 @@ class SupportClass:
         self.startMeasureButton = None
         self.container = container
         self.measureSettings = measure_settings.MeasureSettings()
+
+        self.measureType = 0
 
         self.inMeasureScreen = False
 
@@ -68,35 +67,33 @@ class SupportClass:
 
 
     def startMeasure(self):
-        print(self.currentScreen.layout.leftLayout.comboBox.currentIndex())
-        measureType = 0
+
         if self.currentScreen.layout.leftLayout.comboBox.currentIndex() == 1:
-            measureType = 1
+            self.measureType = 1
             self.inMeasureScreen = True
         elif self.currentScreen.layout.leftLayout.comboBox.currentIndex() == 2:
-            measureType = 2
-        if measureType == 2:
-            ms = settings_screen.SettingsScreen(self)
-        else:
+            self.measureType = 2
+        if self.measureType != 2:
             self.inMeasureScreen = True
-            ms = measure_screen.MeasureScreen(self, measureType)
-
-        self.container.replaceCentralWidget(ms)
-        try:
+            ms = measure_screen.MeasureScreen(self, self.measureType)
+            self.container.replaceCentralWidget(ms)
             ms.initUI()
-        except Exception as e:
-            print(e)
-        self.currentScreen = ms
+            self.currentScreen = ms
+        else:
+            settings_screen.SettingsScreen(self, self.measureType, self.container)
+
+
+
 
     def startTransistorScreen(self):
         ms = transistor_measure_screen.TransistorScreen(self)
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = True
-        try:
-            ms.initUI()
-        except Exception as e:
-            print(e)
-        self.currentScreen = ms
+        ms.initUI()
+
+
+        print(ms)
+        print(self)
 
     def returnToMainScreen(self):
         ms = main_screen.MainScreen(self)
@@ -109,13 +106,7 @@ class SupportClass:
         self.currentScreen = ms
 
     def returnToSettingsScreen(self):
-        ms = settings_screen.SettingsScreen(self)
-        self.container.replaceCentralWidget(ms)
-        self.inMeasureScreen = False
-        try:
-            ms.initUI()
-        except Exception as e:
-            print(e)
-        self.currentScreen = ms
+       self.returnToMainScreen()
+       settings_screen.SettingsScreen(self, self.measureType, self.container)
 
 

@@ -2,20 +2,22 @@ import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
-class SettingsScreen(qt.QWidget):
-    def __init__(self, supportClass):
-        super().__init__()
+class SettingsScreen(qt.QMainWindow):
+    def __init__(self, supportClass, measureCode, parent=None):  #MeasureCode: 0 = Diodmeasurescreen, 2 = Transistormeasurescreen
+        super().__init__(parent)
 
         self.supportClass = supportClass
         self.centralWidget = None
+        self.buttonClose = False
+        self.measureCode = measureCode
 
+        self.initUI()
     def initUI(self):
-        self.centralWidget = LayoutCombine(self.supportClass.options)
-
+        self.centralWidget = LayoutCombine(self.supportClass.options, self.measureCode)
         self.initInputsAndComboBoxes()
 
         self.centralWidget.rightWidget.submitButton.pressed.connect(self.onSubmitClick)
-        self.centralWidget.leftWidget.returnButton.pressed.connect(self.supportClass.returnToMainScreen)
+        self.centralWidget.leftWidget.returnButton.pressed.connect(self.centralWidget.close)
 
     def initInputsAndComboBoxes(self):
         measureSettings = self.supportClass.measureSettings
@@ -34,8 +36,13 @@ class SettingsScreen(qt.QWidget):
         comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
         comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
 
+    def closeEvent(self, closeEvent):
+        print(closeEvent)
+        closeEvent.accept()
 
     def onSubmitClick(self):
+        self.buttonClose = True
+
         inputWidget = self.centralWidget.rightWidget.inputWidgets
         measureComboBoxes = self.centralWidget.leftWidget.measureComboBoxes.comboBoxes
         measureSetting = self.supportClass.measureSettings
@@ -56,24 +63,32 @@ class SettingsScreen(qt.QWidget):
         measureSetting.measurePorts = measurePorts
 
         self.supportClass.startTransistorScreen()
+        self.centralWidget.close()
+
+    def onReturnClick(self):
+        self.buttonClose = True
+        self.close()
+
 
 class LayoutCombine(qt.QWidget):
-    def __init__(self, options):
+    def __init__(self, options, measureCode):
         super().__init__()
 
         self.options = options
+        self.measureCode = measureCode
 
         self.leftWidget = None
         self.rightWidget = None
+
+        self.setWindowModality(qtcore.Qt.ApplicationModal)
 
         self.showUI()
 
     def showUI(self):
         layout = qt.QHBoxLayout()
 
-        self.leftWidget = LeftLayoutCombine(self.options)
-        self.rightWidget = RightLayoutCombine()
-
+        self.leftWidget = LeftLayoutCombine(self.options, self.measureCode)
+        self.rightWidget = RightLayoutCombine(self.measureCode)
         layout.addWidget(self.leftWidget)
         layout.addWidget(self.rightWidget)
 
@@ -82,10 +97,11 @@ class LayoutCombine(qt.QWidget):
         self.show()
 
 class LeftLayoutCombine(qt.QWidget):
-    def __init__(self, options):
+    def __init__(self, options, measureCode):
         super().__init__()
 
         self.options = options
+        self.measureCode = measureCode
         self.measureComboBoxes = None
         self.returnButton = None
         self.showUI()
@@ -93,7 +109,11 @@ class LeftLayoutCombine(qt.QWidget):
     def showUI(self):
         layout = qt.QVBoxLayout()
 
-        self.measureComboBoxes = MeasurePortsComboBoxes(self.options)
+        if self.measureCode == 2:
+            self.measureComboBoxes = MeasurePortsComboBoxes(self.options)
+        elif self.measureCode == 0:
+            self.measureComboBoxes = XAxisComboBox(self.options)
+
         self.returnButton = qt.QPushButton("Return")
 
         layout.addWidget(self.measureComboBoxes)
@@ -101,6 +121,25 @@ class LeftLayoutCombine(qt.QWidget):
         layout.setAlignment(self.returnButton, qtcore.Qt.AlignBottom)
 
         self.setLayout(layout)
+
+class XAxisComboBox(qt.QWidget):
+    def __init__(self, options):
+        super().__init__()
+
+        self.comboBoxes = []
+        self.options = options
+
+        self.showUi()
+
+    def showUi(self):
+        layout = qt.QVBoxLayout()
+        comboBox = qt.QComboBox()
+        for option in self.options:
+            comboBox.addItem(option)
+        self.comboBoxes.append(comboBox)
+        layout.addWidget(comboBox)
+        self.setLayout(layout)
+
 
 class MeasurePortsComboBoxes(qt.QWidget):
     def __init__(self, options):
@@ -167,16 +206,21 @@ class MeasurePortsComboBoxes(qt.QWidget):
         self.setLayout(layout)
 
 class RightLayoutCombine(qt.QWidget):
-    def __init__(self):
+    def __init__(self, measureCode):
         super().__init__()
 
+        self.measureCode = measureCode
         self.inputWidgets = None
         self.submitButton = None
         self.showUI()
 
     def showUI(self):
         layout = qt.QVBoxLayout()
-        self.inputWidgets = DataInputWidget()
+        if self.measureCode == 2:
+            self.inputWidgets = TransistorInputWidget()
+        elif self.measureCode == 0:
+            self.inputWidgets = DiodeInputWidget()
+
         self.submitButton = qt.QPushButton("Submit")
 
 
@@ -186,8 +230,36 @@ class RightLayoutCombine(qt.QWidget):
         layout.setAlignment(self.submitButton, qtcore.Qt.AlignBottom)
 
         self.setLayout(layout)
+class DiodeInputWidget(qt.QWidget):
+    def __init__(self):
+        super().__init__()
 
-class DataInputWidget(qt.QWidget):
+        self.inputR1 = None
+        self.inputR2 = None
+
+        self.showUi()
+
+    def showUi(self):
+        layout = qt.QGridLayout()
+
+        r1Label = qt.QLabel("R1 (Ω): ")
+        r2Label = qt.QLabel("R2 (Ω): ")
+
+        self.inputR1 = qt.QLineEdit()
+        self.inputR1.setValidator(qtgui.QIntValidator())
+
+        self.inputR2 = qt.QLineEdit()
+        self.inputR2.setValidator(qtgui.QIntValidator())
+
+        layout.addWidget(r1Label, 0, 0)
+        layout.addWidget(r2Label, 1, 0)
+
+        layout.addWidget(self.inputR1, 0, 1)
+        layout.addWidget(self.inputR2, 1, 1)
+
+        self.setLayout(layout)
+
+class TransistorInputWidget(qt.QWidget):
     def __init__(self):
         super().__init__()
 

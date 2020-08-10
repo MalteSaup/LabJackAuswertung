@@ -1,31 +1,25 @@
-import math
-import time
-
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
 import threading
 
-import copy
 import pandas as pd
 
 import matplotlib.backends.qt_compat as qtplt
-import matplotlib.figure as fig
 import matplotlib.pyplot as plt
 
 import export_screen
-import settings_screen
-import transistor_measure_screen_widget as tmsw
-import transistor_measure_screen_settings_widget as tmssw
-import transistor_measure_scree_calc_widget as tmscw
-import transistor_measure_screen_calc_result_widget as tmscrw
+from transistorMeasureScreen import transistor_measure_screen_plot_widget as tmspw, \
+    transistor_measure_screen_settings_widget as tmssw, transistor_measure_screen_calc_result_widget as tmscrw, \
+    transistor_measure_scree_calc_widget as tmscw
 import calculate
+import return_message_box
 
 if qtplt.is_pyqt5():
-    import matplotlib.backends.backend_qt5agg as pyqtplt
+    pass
 else:
-    import matplotlib.backends.backend_qt4agg as pyqtplt
+    pass
 
 
 class TransistorScreen(qt.QWidget):
@@ -89,14 +83,16 @@ class TransistorScreen(qt.QWidget):
 
     def initUI(self):
 
-        #print(self.supportClass.measureSettings.toString())
+        # print(self.supportClass.measureSettings.toString())
 
         self.createUceUbeTicks()
 
         self.layout = qt.QGridLayout()
         self.lbh = tmssw.LabelHolder(self.supportClass.options, self.measurePorts)
-        #self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
-        self.plt = tmsw.TransistorMeasureScreenWidget(self.measureData, [self.uceMin, self.uceMax], [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel, self.ubeTicks, self.ubeTicksLabel)
+        # self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
+        self.plt = tmspw.TransistorMeasureScreenWidget(self.measureData, [self.uceMin, self.uceMax],
+                                                       [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel,
+                                                       self.ubeTicks, self.ubeTicksLabel)
         self.layout.addWidget(self.lbh, 0, 0)
         self.layout.addWidget(self.tcw, 0, 1)
         self.layout.addWidget(self.plt, 0, 2)
@@ -106,7 +102,7 @@ class TransistorScreen(qt.QWidget):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
 
-        self.lbh.returnButton.pressed.connect(self.supportClass.returnToSettingsScreen)
+        self.lbh.returnButton.pressed.connect(self.initMessageBox)
         self.lbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
         self.lbh.addMeasurePointButton.pressed.connect(self.addMeasurePoint)
 
@@ -130,12 +126,11 @@ class TransistorScreen(qt.QWidget):
         if self.plt is not None:
             self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
-
     def createUceUbeTicks(self):
         uceStep = round((self.uceMax - self.uceMin) / self.uceUbeStepCount, 1)
         ubeStep = round((self.ubeMax - self.ubeMin) / self.uceUbeStepCount, 1)
 
-        for i in range(self.uceUbeStepCount+1):
+        for i in range(self.uceUbeStepCount + 1):
             self.uceTicks.append(round(self.uceMin + uceStep * i, 2))
             self.ubeTicks.append(round(self.ubeMin + ubeStep * i, 2))
             if self.uceUbeStepCount > i > 0:
@@ -147,7 +142,6 @@ class TransistorScreen(qt.QWidget):
             elif i == self.uceUbeStepCount:
                 self.uceTicksLabel.append("UCE")
                 self.ubeTicksLabel.append("UBE")
-
 
     def updateDataset(self):
         if self.notStopped and not self.stopped:
@@ -184,7 +178,6 @@ class TransistorScreen(qt.QWidget):
 
     def startMeasure(self):
         self.measurePorts = self.measurePorts
-        print(self.measurePorts)
 
         if self.tcw is not None:
             self.tcw.setParent(None)
@@ -272,22 +265,22 @@ class TransistorScreen(qt.QWidget):
         if measurePoint == 0:
             measureText = "All Values"
         else:
-            measureText = str(measurePoint-1)
+            measureText = str(measurePoint - 1)
         self.addCalcResults(measureText, len(uce), b, uearly)
 
     def calcAll(self):
         lower = 0
         upper = 0
-        for i in range(1, self.measurePointCount+1):
+        for i in range(1, self.measurePointCount + 1):
             if i - 1 == 0:
                 try:
-                    upper = self.measurePointForMeasureData.index(i+1)
+                    upper = self.measurePointForMeasureData.index(i + 1)
                 except:
                     upper = len(self.measurePointForMeasureData) - 1
             else:
                 lower = upper
                 try:
-                    upper = self.measurePointForMeasureData.index(i+1)
+                    upper = self.measurePointForMeasureData.index(i + 1)
                 except:
                     upper = None
 
@@ -306,7 +299,7 @@ class TransistorScreen(qt.QWidget):
 
             self.addCalcResults(str(i), len(uce), b, uearly)
 
-    def returnToMainScreen(self):
+    def returnToSettingsScreen(self):
         if self.timer is not None:
             self.timer.stop()
 
@@ -317,7 +310,7 @@ class TransistorScreen(qt.QWidget):
             self.plt.timer.stop()
 
         self.stopped = True
-        self.supportClass.returnToMainScreen()
+        self.supportClass.returnToSettingsScreen()
 
     def createExportData(self):
         if self.plt.checkLength()[0]:
@@ -341,3 +334,12 @@ class TransistorScreen(qt.QWidget):
 
     def initTCW(self):
         self.tcw.calcButton.pressed.connect(self.calcClick)
+
+    def initMessageBox(self):
+        self.messageBox = return_message_box.ReturnMessageBox()
+        self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
+        self.messageBox.exec_()
+
+    def messageBoxButtonClick(self, value):
+        if (value.text() == "OK"):
+            self.returnToSettingsScreen()
