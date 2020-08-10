@@ -2,8 +2,8 @@ import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
-class SettingsScreen(qt.QMainWindow):
-    def __init__(self, supportClass, measureCode, parent=None):  #MeasureCode: 0 = Diodmeasurescreen, 2 = Transistormeasurescreen
+class SettingsScreen(qt.QWidget):
+    def __init__(self, supportClass, measureCode, parent=None):  #MeasureCode: 1 = Diodmeasurescreen, 2 = Transistormeasurescreen
         super().__init__(parent)
 
         self.supportClass = supportClass
@@ -16,8 +16,8 @@ class SettingsScreen(qt.QMainWindow):
         self.centralWidget = LayoutCombine(self.supportClass.options, self.measureCode)
         self.initInputsAndComboBoxes()
 
-        self.centralWidget.rightWidget.submitButton.pressed.connect(self.onSubmitClick)
-        self.centralWidget.leftWidget.returnButton.pressed.connect(self.centralWidget.close)
+        self.centralWidget.rightWidget.submitButton.clicked.connect(self.onSubmitClick)
+        self.centralWidget.leftWidget.returnButton.clicked.connect(self.centralWidget.close)
 
     def initInputsAndComboBoxes(self):
         measureSettings = self.supportClass.measureSettings
@@ -26,15 +26,20 @@ class SettingsScreen(qt.QMainWindow):
 
         inputWidget.inputR1.setText(str(measureSettings.r1))
         inputWidget.inputR2.setText(str(measureSettings.r2))
-        inputWidget.inputUbeMin.setText(str(measureSettings.ubeMin))
-        inputWidget.inputUbeMax.setText(str(measureSettings.ubeMax))
-        inputWidget.inputUceMin.setText(str(measureSettings.uceMin))
-        inputWidget.inputUceMax.setText(str(measureSettings.uceMax))
 
-        comboBoxes[0].setCurrentIndex(measureSettings.measurePorts[3]+1)
-        comboBoxes[1].setCurrentIndex(measureSettings.measurePorts[0]+1)
-        comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
-        comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
+        if self.measureCode == 2:
+            inputWidget.inputUbeMin.setText(str(measureSettings.ubeMin))
+            inputWidget.inputUbeMax.setText(str(measureSettings.ubeMax))
+            inputWidget.inputUceMin.setText(str(measureSettings.uceMin))
+            inputWidget.inputUceMax.setText(str(measureSettings.uceMax))
+
+            comboBoxes[0].setCurrentIndex(measureSettings.measurePorts[3]+1)
+            comboBoxes[1].setCurrentIndex(measureSettings.measurePorts[0]+1)
+            comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
+            comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
+
+        elif self.measureCode == 1:
+            comboBoxes[0].setCurrentIndex(measureSettings.xAxisPort)
 
     def closeEvent(self, closeEvent):
         print(closeEvent)
@@ -42,27 +47,36 @@ class SettingsScreen(qt.QMainWindow):
 
     def onSubmitClick(self):
         self.buttonClose = True
-
         inputWidget = self.centralWidget.rightWidget.inputWidgets
         measureComboBoxes = self.centralWidget.leftWidget.measureComboBoxes.comboBoxes
         measureSetting = self.supportClass.measureSettings
+        if self.measureCode == 2:
+            measurePorts = [
+                measureComboBoxes[1].currentIndex() - 1,
+                measureComboBoxes[2].currentIndex() - 1,
+                measureComboBoxes[3].currentIndex() - 1,
+                measureComboBoxes[0].currentIndex() - 1
+            ]
 
-        measurePorts = [
-            measureComboBoxes[1].currentIndex() - 1,
-            measureComboBoxes[2].currentIndex() - 1,
-            measureComboBoxes[3].currentIndex() - 1,
-            measureComboBoxes[0].currentIndex() - 1
-        ]
+            measureSetting.r1 = int(inputWidget.inputR1.text())
+            measureSetting.r2 = int(inputWidget.inputR2.text())
+            measureSetting.ubeMin = float(inputWidget.inputUbeMin.text())
+            measureSetting.ubeMax = float(inputWidget.inputUbeMax.text())
+            measureSetting.uceMin = float(inputWidget.inputUceMin.text())
+            measureSetting.uceMax = float(inputWidget.inputUceMax.text())
+            measureSetting.measurePorts = measurePorts
 
-        measureSetting.r1 = int(inputWidget.inputR1.text())
-        measureSetting.r2 = int(inputWidget.inputR2.text())
-        measureSetting.ubeMin = float(inputWidget.inputUbeMin.text())
-        measureSetting.ubeMax = float(inputWidget.inputUbeMax.text())
-        measureSetting.uceMin = float(inputWidget.inputUceMin.text())
-        measureSetting.uceMax = float(inputWidget.inputUceMax.text())
-        measureSetting.measurePorts = measurePorts
+            self.supportClass.startTransistorScreen()
 
-        self.supportClass.startTransistorScreen()
+        elif self.measureCode == 1:
+            xAxisPort = measureComboBoxes[0]
+
+            measureSetting.r1 = int(inputWidget.inputR1.text())
+            measureSetting.r2 = int(inputWidget.inputR2.text())
+            measureSetting.xAxisPort = xAxisPort.currentIndex() - 1
+
+            self.supportClass.startMeasureScreen()
+
         self.centralWidget.close()
 
     def onReturnClick(self):
@@ -111,7 +125,7 @@ class LeftLayoutCombine(qt.QWidget):
 
         if self.measureCode == 2:
             self.measureComboBoxes = MeasurePortsComboBoxes(self.options)
-        elif self.measureCode == 0:
+        elif self.measureCode == 1:
             self.measureComboBoxes = XAxisComboBox(self.options)
 
         self.returnButton = qt.QPushButton("Return")
@@ -218,7 +232,7 @@ class RightLayoutCombine(qt.QWidget):
         layout = qt.QVBoxLayout()
         if self.measureCode == 2:
             self.inputWidgets = TransistorInputWidget()
-        elif self.measureCode == 0:
+        elif self.measureCode == 1:
             self.inputWidgets = DiodeInputWidget()
 
         self.submitButton = qt.QPushButton("Submit")

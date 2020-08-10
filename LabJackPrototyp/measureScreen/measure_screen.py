@@ -29,23 +29,22 @@ class MeasureScreen(qt.QWidget):
 
         self.xue = []
         self.yue = []
-
-        self.checkboxChecker = []
+        self.measurePoints = []
 
         self.supportClass = supportClass
-        self.checkboxes = None
-        self.pltLayout = None
+        self.settings = None
+        self.plt = None
 
         self.notStopped = True
 
         self.timer = None
+        self.t = None
 
         self.samplerate = 25
         self.functionCode = functionCode
         self.count = 0
 
-        self.ls = "-"
-        self.ms = "."
+        self.measurePointCount = 1
 
         self.mVtoV = 1000
         self.mAtoA = 1000
@@ -53,38 +52,47 @@ class MeasureScreen(qt.QWidget):
 
         self.minWidthWidget = 190
 
+        self.checkboxes = []
+
     def initUI(self):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
 
         layout = qt.QHBoxLayout()
 
-        self.checkboxes = mssw.Settings(self.functionCode)
+        self.settings = mssw.Settings(self.functionCode, self.supportClass.measureSettings.xAxisPort)
 
-        self.checkboxes.exitButton.pressed.connect(self.returnToMainScreen)
-        self.checkboxChecker.append(self.checkboxes.leftCheck.checkBoxes[1])
-        self.checkboxChecker.append(self.checkboxes.rightCheck.checkBoxes[1])
-        self.checkboxChecker.append(self.checkboxes.leftCheck.checkBoxes[2])
-        self.checkboxChecker.append(self.checkboxes.rightCheck.checkBoxes[2])
-        self.checkboxChecker.append(self.checkboxes.leftCheck.checkBoxes[0])
-        self.checkboxChecker.append(self.checkboxes.rightCheck.checkBoxes[0])
+        self.checkboxes = self.settings.checkBoxes
 
-        self.pltLayout = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.checkboxChecker, self.functionCode)
+        self.settings.returnButton.clicked.connect(self.returnButtonPressed)
 
-        layout.addWidget(self.checkboxes)
-        layout.addWidget(self.pltLayout)
+        self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.settings.checkBoxes, self.functionCode)
+
+        layout.addWidget(self.settings)
+        layout.addWidget(self.plt)
 
         self.samplerate = int(1000 / self.samplerate)
 
         if self.functionCode == 0:
             self.measureClock()
         elif self.functionCode == 1:
-            self.checkboxes.comboBox.currentIndexChanged.connect(self.checkboxLayoutManipulator)
-            self.checkboxes.startMeasureButton.pressed.connect(self.startMeasure)
+            self.settings.startMeasureButton.clicked.connect(self.startMeasure)
+            self.settings.addMeasurePointButton.clicked.connect(self.addMeasurePoint)
 
-        self.checkboxes.setFixedWidth(self.minWidthWidget)
+        self.settings.setFixedWidth(self.minWidthWidget)
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
         self.setLayout(layout)
+
+    def returnButtonPressed(self):
+        if self.functionCode == 0:
+            self.returnToMainScreen()
+        elif self.functionCode == 1:
+            self.returnToSettingsScreen()
+
+    def addMeasurePoint(self):
+        print("Click")
+        self.measurePointCount += 1
+        self.settings.measurePointLabel.setText("Measure Points: " + str(self.measurePointCount))
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
         self.resizeWidgets()
@@ -97,17 +105,16 @@ class MeasureScreen(qt.QWidget):
             newWidthCanvas = width - self.minWidthWidget
         else:
             newWidthCanvas = width * 4 / 5
-        if self.pltLayout is not None:
-            self.pltLayout.canvas.setGeometry(0, 0, newWidthCanvas, height)
+        if self.plt is not None:
+            self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
     def updateDataset(self, index):
         if self.notStopped:
             uebergabe = self.supportClass.device.readRegister(0, 26)
-
             for i in range(4):
                 # Da 1000 mV und 1000 Ohm kann Berechnung vernachlässigt werden da 1000 / 1000 = 1
-                #TODO ADDING UNIT AND RESISTANCE AS VARIABLE TO CALCULATE IT WITH DIFFERENT UNITS AND RESISTANCE. MAYBE INPUT FIELD UNTER COMBOBOXES
-                if self.checkboxChecker[i].isChecked():
+                #TODO Problem Diodenmessung nomma sagen lassen weil wenn wiederstand nicht 1K dann nicht = 1 => nicht alles egal...
+                if self.settings.checkBoxes[i].isChecked():
                     if i <= 1:
                         self.ax_y[i].append(abs(uebergabe[i*2] - uebergabe[i*2+1]))
                     elif i == 2:
@@ -120,35 +127,29 @@ class MeasureScreen(qt.QWidget):
                 self.ax_x.append(self.count)
                 self.count += 1
             elif self.functionCode == 1:
+                multiplication = self.mVtoV / self.supportClass.measureSettings.r2
+                self.measurePoints.append(self.measurePointCount)
                 if index <= 1:
-                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]) * self.mVtoV)
+                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]))
                 elif index == 2:
-                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]) * self.mVtoV)
+                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]))
                 elif index == 3:
-                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]) * self.mVtoV)
-
-
-
-    def checkboxLayoutManipulator(self):
-        for i in range(4):
-            type(self.checkboxChecker[i])
-            self.checkboxChecker[i].setEnabled(True)
-        index = self.checkboxes.comboBox.currentIndex()
-        if index % 2 == 1:
-            self.checkboxes.rightCheck.checkBoxes[1 + int(index / 3)].setCheckState(False)
-            self.checkboxes.rightCheck.checkBoxes[1 + int(index / 3)].setEnabled(False)
-        else:
-            self.checkboxes.leftCheck.checkBoxes[1 + int(index / 2)].setCheckState(False)
-            self.checkboxes.leftCheck.checkBoxes[1 + int(index / 2)].setEnabled(False)
+                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]))
 
     def startMeasure(self):
-        try:
-            index = self.checkboxes.comboBox.currentIndex()
-        except:
-            index = -1
-        self.checkboxes.comboBox.setEnabled(False)
-        self.t = threading.Thread(target=self.measureClock(index))
-        self.t.start()
+        if self.t is None:
+            self.t = threading.Thread(target=self.measureClock(self.supportClass.measureSettings.xAxisPort))
+            self.t.start()
+            if self.functionCode == 1:
+                self.settings.startMeasureButton.setText = "Stop Measurement"
+        else:
+            print("WASRUM")
+            if self.notStopped:
+                self.notStopped = False
+                self.settings.startMeasureButton.setText = "Start Measurement"
+            else:
+                self.notStopped = True
+                self.settings.startMeasureButton.setText = "Stop Measurement"
 
     def measureClock(self, index=-1):
         self.timer = qtcore.QTimer(self)
@@ -169,29 +170,38 @@ class MeasureScreen(qt.QWidget):
         if self.timer is not None:
             self.timer.stop()
 
-        if self.pltLayout.timer is not None:
-            self.pltLayout.timer.stop()
+        if self.plt.timer is not None:
+            self.plt.timer.stop()
 
-        self.pltLayout.stopped = True
+        self.plt.stopped = True
         self.supportClass.returnToMainScreen()
 
+    def returnToSettingsScreen(self):
+        if self.timer is not None:
+            self.timer.stop()
+
+        if self.plt.timer is not None:
+            self.plt.timer.stop()
+
+        self.plt.stopped = True
+        self.supportClass.returnToSettingsScreen()
+
     def createExportData(self):
-        if self.pltLayout.checkXYLength()[0]:
+        if self.plt.checkXYLength()[0]:
             x_ueb = list(self.ax_x)
             y_ueb = copy.deepcopy(self.ax_y)
-            fig_ueb = self.pltLayout.canvas.figure
+            measurePointDate = list(self.measurePoints)
+            fig_ueb = self.plt.canvas.figure
             dataFrame = pd.DataFrame()
-            dataFrame.insert(0, "x0", x_ueb, True)
-            empty_ueb_arr = [math.nan] * len(x_ueb)
-            count = 0
+            dataFrame.insert(0, "Measure Point", measurePointDate, True)
+            dataFrame.insert(1, "x0", x_ueb, True)
+
             for i in range(len(y_ueb)):
-                if self.checkboxChecker[i].isChecked():
-                    dataFrame.insert(len(dataFrame.columns), "y" + str(count), y_ueb[i], True)
-                    count += 1
-                else:
-                    dataFrame.insert(len(dataFrame.columns), "ye" + str(i), empty_ueb_arr, True)
+                if self.settings.checkBoxes[i].isChecked():
+                    dataFrame.insert(len(dataFrame.columns), "Channel " + str(i+1), y_ueb[i], True)
 
             return dataFrame, fig_ueb
+
         else:
             timerCreateExData = qtcore.QTimer(self)
             timerCreateExData.timeout.connect(self.saveClick)

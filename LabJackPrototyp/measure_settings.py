@@ -1,5 +1,5 @@
 class MeasureSettings:
-    def __init__(self, r1=100000, r2=200, ubeMin=0, ubeMax=1.0, uceMin=0, uceMax=12, measurePorts=None, xAxisPort=None):
+    def __init__(self, r1=100000, r2=200, ubeMin=0, ubeMax=1.0, uceMin=0, uceMax=12, measurePorts=None, xAxisPort=1):
         if measurePorts is None:
             measurePorts = [1, 3, 2, 0]
         self.r1 = r1

@@ -67,13 +67,8 @@ class SupportClass:
 
 
     def startMeasure(self):
-
-        if self.currentScreen.layout.leftLayout.comboBox.currentIndex() == 1:
-            self.measureType = 1
-            self.inMeasureScreen = True
-        elif self.currentScreen.layout.leftLayout.comboBox.currentIndex() == 2:
-            self.measureType = 2
-        if self.measureType != 2:
+        self.measureType = self.currentScreen.layout.leftLayout.comboBox.currentIndex()
+        if self.measureType == 0:
             self.inMeasureScreen = True
             ms = measure_screen.MeasureScreen(self, self.measureType)
             self.container.replaceCentralWidget(ms)
@@ -83,17 +78,19 @@ class SupportClass:
             settings_screen.SettingsScreen(self, self.measureType, self.container)
 
 
-
-
     def startTransistorScreen(self):
         ms = transistor_measure_screen.TransistorScreen(self)
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = True
+        self.currentScreen = ms
         ms.initUI()
 
-
-        print(ms)
-        print(self)
+    def startMeasureScreen(self):
+        ms = measure_screen.MeasureScreen(self, self.measureType)
+        self.container.replaceCentralWidget(ms)
+        self.inMeasureScreen = True
+        self.currentScreen = ms
+        ms.initUI()
 
     def returnToMainScreen(self):
         ms = main_screen.MainScreen(self)

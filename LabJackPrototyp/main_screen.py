@@ -59,7 +59,7 @@ class ButtonHolder(qt.QVBoxLayout):
         connectButton.pressed.connect(self.connectDevice)
         self.startMeasureButton.clicked.connect(self.supportClass.startMeasure)
         self.supportClass.startMeasureButton = self.startMeasureButton
-        exitButton.pressed.connect(qtcore.QCoreApplication.instance().quit)
+        exitButton.clicked.connect(qtcore.QCoreApplication.instance().quit)
 
 
         if not self.supportClass.runningFlag:

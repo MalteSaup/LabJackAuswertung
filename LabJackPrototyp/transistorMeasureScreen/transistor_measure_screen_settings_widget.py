@@ -26,9 +26,7 @@ class LabelHolder(qt.QWidget):
         ubeLabel = qt.QLabel("UBE: ")
         ibLabel = qt.QLabel("IB: ")
 
-        measurePointsLabel = qt.QLabel("Measure Points:")
-        bLabel = qt.QLabel("B: ")
-        uEarlyLabel = qt.QLabel("UEarly: ")
+        measurePointsLabel = qt.QLabel("Measure Points: ")
 
         icMeasurePortLabel = qt.QLabel(self.options[self.measurePorts[0] + 1])
         uceMeasurePortLabel = qt.QLabel(self.options[self.measurePorts[1] + 1])
@@ -36,9 +34,8 @@ class LabelHolder(qt.QWidget):
         ibMeasurePortLabel = qt.QLabel(self.options[self.measurePorts[3] + 1])
 
         self.measurePointsValueLabel = qt.QLabel("1")
-        self.bValueLabel = qt.QLabel("-")
-        self.uEarlyValueLabel = qt.QLabel("-")
 
+        #Buttons
         self.startMeasureButton = qt.QPushButton("Start Measure")
         self.addMeasurePointButton = qt.QPushButton("Add Measure Point")
         self.returnButton = qt.QPushButton("Return")
@@ -48,18 +45,14 @@ class LabelHolder(qt.QWidget):
         layout.addWidget(uceLabel, 2, 0)
         layout.addWidget(ubeLabel, 3, 0)
         layout.addWidget(measurePointsLabel, 4, 0)
-        layout.addWidget(bLabel, 5, 0)
-        layout.addWidget(uEarlyLabel, 6, 0)
-        layout.addWidget(self.startMeasureButton, 7, 0, 1, 2)
-        layout.addWidget(self.addMeasurePointButton, 8, 0, 1, 2)
-        layout.addWidget(self.returnButton, 9, 0, 1, 2)
+        layout.addWidget(self.startMeasureButton, 5, 0, 1, 2)
+        layout.addWidget(self.addMeasurePointButton, 6, 0, 1, 2)
+        layout.addWidget(self.returnButton, 7, 0, 1, 2)
 
         layout.addWidget(icMeasurePortLabel, 0, 1)
         layout.addWidget(ibMeasurePortLabel, 1, 1)
         layout.addWidget(uceMeasurePortLabel, 2, 1)
         layout.addWidget(ubeMeasurePortLabel, 3, 1)
         layout.addWidget(self.measurePointsValueLabel, 4, 1)
-        layout.addWidget(self.bValueLabel, 5, 1)
-        layout.addWidget(self.uEarlyValueLabel, 6, 1)
 
         self.setLayout(layout)

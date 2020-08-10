@@ -4,107 +4,53 @@ import PyQt5.QtCore as qtcore
 
 
 class Settings(qt.QWidget):
-    def __init__(self, functionCode):
+    def __init__(self, functionCode, xAxisPlot = 0):
         super().__init__()
-        self.leftCheck = None
-        self.rightCheck = None
         self.startMeasureButton = None
-        self.exitButton = None
-        self.comboBox = None
+        self.returnButton = None
+        self.addMeasurePointButton = None
+        self.measurePointLabel = None
+        self.checkBoxes = []
+        self.xAxisPlot = xAxisPlot
         self.functionCode = functionCode
         self.initUI()
+        self.channel1Check = None
+        self.channel2Check = None
+        self.channel3Check = None
+        self.channel4Check = None
 
     def initUI(self):
 
-        hlayout = qt.QHBoxLayout()
-        vlayout = qt.QVBoxLayout()
+        layout = qt.QGridLayout()
 
-        self.leftCheck = CheckBoxesLeft()
-        self.rightCheck = CheckBoxesRight()
+        xAxisPlotLabel = qt.QLabel("X-Axis Plotted Channel: " + str(self.xAxisPlot))
+        self.measurePointLabel = qt.QLabel("Measure Points: 1")
 
-        hlayout.addWidget(self.leftCheck)
-        hlayout.addWidget(self.rightCheck)
+        self.channel1Check = qt.QCheckBox("Channel 1", self)
+        self.channel2Check = qt.QCheckBox("Channel 2", self)
+        self.channel3Check = qt.QCheckBox("Channel 3", self)
+        self.channel4Check = qt.QCheckBox("Channel 4", self)
 
-        layoutHolderCheckboxes = qt.QWidget()
-        layoutHolderCheckboxes.setLayout(hlayout)
+        self.checkBoxes.append(self.channel1Check)
+        self.checkBoxes.append(self.channel2Check)
+        self.checkBoxes.append(self.channel3Check)
+        self.checkBoxes.append(self.channel4Check)
+
+        self.startMeasureButton = qt.QPushButton("Start Measurement")
+        self.addMeasurePointButton = qt.QPushButton("Add Measure Point")
+        self.returnButton = qt.QPushButton("Return")
+
+        layout.addWidget(self.channel1Check, 1, 0)
+        layout.addWidget(self.channel2Check, 2, 0)
+        layout.addWidget(self.channel3Check, 3, 0)
+        layout.addWidget(self.channel4Check, 4, 0)
+        layout.addWidget(self.returnButton, 8, 0, 1, 2)
 
         if self.functionCode == 1:
-            label = qt.QLabel("Choose Measure Channel for X-Axes: ")
-            options = [
-                "Channel 1",
-                "Channel 2",
-                "Channel 3",
-                "Channel 4"
-            ]
-            self.comboBox = qt.QComboBox()
-            for option in options:
-                self.comboBox.addItem(option)
-            self.startMeasureButton = qt.QPushButton("Start Measurement")
-
-            vlayout.addWidget(label)
-            vlayout.addWidget(self.comboBox)
-            vlayout.addWidget(layoutHolderCheckboxes)
-            vlayout.addWidget(self.startMeasureButton, 200, qtcore.Qt.AlignBottom)
-
-            self.leftCheck.checkBoxes[1].setCheckState(False)
-            self.leftCheck.checkBoxes[1].setEnabled(False)
-
-        else:
-            vlayout.addWidget(layoutHolderCheckboxes)
-
-        self.exitButton = qt.QPushButton("Return")
-        vlayout.addWidget(self.exitButton)
-
-        self.setLayout(vlayout)
-
-
-class CheckBoxesLeft(qt.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.checkBoxes = []
-
-        self.initUI()
-
-    def initUI(self):
-        layout = qt.QVBoxLayout()
-
-        markerCheck = qt.QCheckBox("Marker", self)
-        ai0Check = qt.QCheckBox("Channel 1", self)
-        ai0Check.setChecked(True)
-        ai2Check = qt.QCheckBox("Channel 2", self)
-
-        self.checkBoxes.append(markerCheck)
-        self.checkBoxes.append(ai0Check)
-        self.checkBoxes.append(ai2Check)
-
-        layout.addWidget(markerCheck)
-        layout.addWidget(ai0Check)
-        layout.addWidget(ai2Check)
+            layout.addWidget(xAxisPlotLabel, 0, 0)
+            layout.addWidget(self.measurePointLabel, 5, 0)
+            layout.addWidget(self.startMeasureButton, 6, 0, 1, 2)
+            layout.addWidget(self.addMeasurePointButton, 7, 0, 1, 2)
 
         self.setLayout(layout)
 
-
-class CheckBoxesRight(qt.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.checkBoxes = []
-
-        self.initUI()
-
-    def initUI(self):
-        layout = qt.QVBoxLayout()
-
-        lineCheck = qt.QCheckBox("Line", self)
-        lineCheck.setChecked(True)
-        ai1Check = qt.QCheckBox("AIN1", self)
-        ai3Check = qt.QCheckBox("AIN3", self)
-
-        self.checkBoxes.append(lineCheck)
-        self.checkBoxes.append(ai1Check)
-        self.checkBoxes.append(ai3Check)
-
-        layout.addWidget(lineCheck)
-        layout.addWidget(ai1Check)
-        layout.addWidget(ai3Check)
-
-        self.setLayout(layout)
