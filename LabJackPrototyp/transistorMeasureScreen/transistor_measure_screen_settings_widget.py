@@ -33,14 +33,20 @@ class LabelHolder(qt.QWidget):
 
         # Labels
         icLabel = qt.QLabel("IC * R2: ")
+
         uceLabel = qt.QLabel("UCE: ")
         ubeLabel = qt.QLabel("UBE: ")
         ibLabel = qt.QLabel("IB * R1 ")
 
-        arrowLabel1 = qt.QLabel("=>         ")
-        arrowLabel2 = qt.QLabel("=>         ")
-        arrowLabel3 = qt.QLabel("=>         ")
-        arrowLabel4 = qt.QLabel("=>         ")
+        arrowLabel1 = qt.QLabel("=>")
+        arrowLabel2 = qt.QLabel("=>")
+        arrowLabel3 = qt.QLabel("=>")
+        arrowLabel4 = qt.QLabel("=>")
+
+        arrowLabel1.setFixedWidth(50)
+        arrowLabel2.setFixedWidth(50)
+        arrowLabel3.setFixedWidth(50)
+        arrowLabel4.setFixedWidth(50)
 
         measureSeriesLabel = qt.QLabel("Measure Series: ")
 
@@ -63,14 +69,14 @@ class LabelHolder(qt.QWidget):
 
         #Buttons
         self.startMeasureButton = qt.QPushButton("Start Measure")
-        self.addMeasureSeriesButton = qt.QPushButton("Add Measure Point")
+        self.addMeasureSeriesButton = qt.QPushButton("Add Measure Serie")
         self.returnButton = qt.QPushButton("Return")
 
         layout.addWidget(icLabel, 0, 0)
         layout.addWidget(ibLabel, 2, 0)
         layout.addWidget(uceLabel, 4, 0)
         layout.addWidget(ubeLabel, 6, 0)
-        layout.addWidget(measureSeriesLabel, 8, 0)
+        layout.addWidget(measureSeriesLabel, 8, 0, 1, 2)
         layout.addWidget(self.startMeasureButton, 9, 0, 1, 3)
         layout.addWidget(self.addMeasureSeriesButton, 10, 0, 1, 3)
         layout.addWidget(self.returnButton, 11, 0, 1, 3)
@@ -85,10 +91,10 @@ class LabelHolder(qt.QWidget):
         layout.addWidget(self.ubeValLabelRaw, 7, 0)
         layout.addWidget(self.ubeValLabelProcessed, 7, 2)
 
-        layout.addWidget(arrowLabel1, 1, 1)
-        layout.addWidget(arrowLabel2, 3, 1)
-        layout.addWidget(arrowLabel3, 5, 1)
-        layout.addWidget(arrowLabel4, 7, 1)
+        layout.addWidget(arrowLabel1, 1, 1, 1, 1, qtcore.Qt.AlignHCenter)
+        layout.addWidget(arrowLabel2, 3, 1, 1, 1, qtcore.Qt.AlignHCenter)
+        layout.addWidget(arrowLabel3, 5, 1, 1, 1, qtcore.Qt.AlignHCenter)
+        layout.addWidget(arrowLabel4, 7, 1, 1, 1, qtcore.Qt.AlignHCenter)
 
         layout.addWidget(icMeasurePortLabel, 0, 2)
         layout.addWidget(ibMeasurePortLabel, 2, 2)

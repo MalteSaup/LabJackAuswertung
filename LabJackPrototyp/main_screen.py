@@ -34,8 +34,7 @@ class ButtonHolder(qt.QVBoxLayout):
         self.options = [
             "Oszi",
             "Normal Messen",
-            "Show Transistor",
-            "Experiment 4"
+            "Show Transistor"
         ]
 
         # DropDown

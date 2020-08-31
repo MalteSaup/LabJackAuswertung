@@ -91,6 +91,7 @@ class Calculator:
             print("ERROR SLOPE DIVIDE BY ZERO")
             slope = "ERROR"
 
+        b = None
 
         try:
             b = arr2Average - slope * aSAAverage

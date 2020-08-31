@@ -1,3 +1,5 @@
+import math
+
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
@@ -15,6 +17,7 @@ from transistorMeasureScreen import transistor_measure_screen_plot_widget as tms
     transistor_measure_scree_calc_widget as tmscw
 import calculate
 import return_message_box
+import calc_result
 
 if qtplt.is_pyqt5():
     pass
@@ -37,7 +40,7 @@ class TransistorScreen(qt.QWidget):
         self.lbh = None
         self.tcw = None
 
-        self.columnNames = ["Measure Point", "IC", "UCE", "UBE", "IB"]
+        self.columnNames = ["Measure Serie", "IC", "UCE", "UBE", "IB", "Estimation Results"]
 
         self.measureSettings = self.supportClass.measureSettings
 
@@ -65,7 +68,7 @@ class TransistorScreen(qt.QWidget):
         self.milli = 1000
         self.mikro = 1e6
 
-        self.minWidthWidget = 190
+        self.minWidthWidget = 210
 
         self.notStopped = True
 
@@ -82,6 +85,8 @@ class TransistorScreen(qt.QWidget):
         self.settingWidgets = 1
 
         self.calculator = calculate.Calculator()
+
+        self.calcResults = []
 
     def initUI(self):
 
@@ -167,13 +172,22 @@ class TransistorScreen(qt.QWidget):
             self.resizeWidgets()
 
     def addCalcResults(self, measureSeries, amount, b, uearly):
-        resultWidget = tmscrw.CalcResultWidget(measureSeries, b, uearly, amount)
-        self.tcw.calcResultHolder.layout.addWidget(resultWidget)
+        if not self.doesResultExist(measureSeries):
+            self.calcResults.append(calc_result.CalcResult(measureSeries, uearly, b, amount))
+            resultWidget = tmscrw.CalcResultWidget(measureSeries, b, uearly, amount)
+            self.tcw.calcResultHolder.layout.addWidget(resultWidget)
+
+    def doesResultExist(self, measureSeries):
+        for result in self.calcResults:
+            if measureSeries == result.measureSerie:
+                return True
+        return False
 
     def startMeasureButtonPressed(self):
         if not self.running:
             self.startMeasure()
             self.running = True
+            self.calcResults = []
         else:
             self.stopMeasure()
             self.running = False
@@ -326,8 +340,28 @@ class TransistorScreen(qt.QWidget):
             dataFrame = pd.DataFrame()
             print(len(data_ueb))
             print(len(self.columnNames))
+
+            estimationData = self.createMeasureEstimationCol()
+
+            print("EDD")
+            print(estimationData)
+
+            if(estimationData is not None):
+                if len(estimationData) > len(data_ueb[0]):
+                    diff = len(estimationData) - len(data_ueb[0])
+                    for i in range(len(data_ueb)):
+                        for j in range(diff):
+                            data_ueb[i].append(math.nan)
+                elif len(estimationData) < len(data_ueb[0]):
+                    diff = len(data_ueb[0]) - len(estimationData)
+                    for i in range(diff):
+                        estimationData.append(math.nan)
+
             for i in range(len(data_ueb)):
                 dataFrame.insert(i, self.columnNames[i], data_ueb[i], True)
+
+            if estimationData is not None:
+                dataFrame.insert(len(dataFrame.columns), "Estimation Results", estimationData, True)
 
             return dataFrame, fig_ueb
         else:
@@ -337,21 +371,39 @@ class TransistorScreen(qt.QWidget):
             timerCreateExData.start(100)
             return None, None
 
+    def createMeasureEstimationCol(self):
+        if len(self.calcResults) == 0:
+            return None
+        else:
+            data = []
+            for calcResult in self.calcResults:
+                data.append("Measure Serie: " + str(calcResult.measureSerie))
+                if type(calcResult.uearly) == str:
+                    data.append("UEarly: " + calcResult.uearly)
+                else:
+                    data.append("UEarly: " + str(round(calcResult.uearly, 3)) + "V")
+                if type(calcResult.b) == str:
+                   data.append("B: " + calcResult.b)
+                else:
+                    data.append("B: " + str(round(calcResult.b, 3)))
+                data.append("Measure Point Amount: " + str(calcResult.measurePointCount))
+                data.append("")
+            return data
     def startUpdateLabel(self):
         self.timerLabel = qtcore.QTimer(self)
         self.timerLabel.timeout.connect(self.updateDataLabel)
-        self.timerLabel.start(150)
+        self.timerLabel.start(250)
 
     def updateDataLabel(self):
-        self.lbh.icValLabelRaw.setText(str(self.measureData[0][-1] / self.milli * self.r2) + "V")
-        self.lbh.icValLabelProcessed.setText(str(self.measureData[0][-1]) + "mA")
-        self.lbh.icValLabelRaw.setText(str(self.measureData[3][-1] / self.mikro * self.r1) + "V")
-        self.lbh.ibValLabelProcessed.setText(str(self.measureData[3][-1]) + "uA")
+        self.lbh.icValLabelRaw.setText("{:.3f}".format(self.measureData[0][-1] / self.milli * self.r2) + "V")
+        self.lbh.icValLabelProcessed.setText("{:.3f}".format(self.measureData[0][-1]) + "mA")
+        self.lbh.ibValLabelRaw.setText("{:.3f}".format(self.measureData[3][-1] / self.mikro * self.r1) + "V")
+        self.lbh.ibValLabelProcessed.setText("{:.3f}".format(self.measureData[3][-1]) + "uA")
 
-        self.lbh.uceValLabelRaw.setText(str(self.measureData[1][-1]) + "V")
-        self.lbh.uceValLabelProcessed.setText(str(self.measureData[1][-1]) + "V")
-        self.lbh.ubeValLabelRaw.setText(str(self.measureData[2][-1]) + "V")
-        self.lbh.ubeValLabelProcessed.setText(str(self.measureData[2][-1]) + "V")
+        self.lbh.uceValLabelRaw.setText("{:.3f}".format(self.measureData[1][-1]) + "V")
+        self.lbh.uceValLabelProcessed.setText("{:.3f}".format(self.measureData[1][-1]) + "V")
+        self.lbh.ubeValLabelRaw.setText("{:.3f}".format(self.measureData[2][-1]) + "V")
+        self.lbh.ubeValLabelProcessed.setText("{:.3f}".format(self.measureData[2][-1]) + "V")
 
     def initTCW(self):
         self.tcw.calcButton.pressed.connect(self.calcClick)

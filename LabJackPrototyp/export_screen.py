@@ -5,6 +5,8 @@ import PyQt5.QtCore as qtcore
 import math
 import pandas as pd
 
+import return_message_box
+
 class ExportScreen(qt.QMainWindow):
     def __init__(self, df, fig, columnName=["x0", "y0", "y1", "y2", "y3", "y4", "y5", "y6"]):
         super().__init__()
@@ -12,6 +14,7 @@ class ExportScreen(qt.QMainWindow):
         self.df = df
         self.fig = fig
         self.layout = None
+        self.errorBox = None
         self.columnName = columnName
         self.showUI()
 
@@ -38,33 +41,33 @@ class ExportScreen(qt.QMainWindow):
 
     def saveFile(self, datatypeDescription, datatype):
         try:
-            print("GRÖ?E " + str(self.df.get(self.columnName[0]).size)) #TODO WAS ZUM PRÜTZEL
+            print("GRÖSSE " + str(self.df.get(self.columnName[0]).size))
         except Exception as ex:
             print(ex)
         path_full = qt.QFileDialog.getSaveFileName(self, "Save File", "unnamed", datatypeDescription + " (*"+datatype + ");;Any Files (*.*)")
         path = path_full[0]
-        if path != "":
-            if datatype == ".png" or datatype == ".jpg" or datatype == ".pdf":
-                self.fig.savefig(path)#todo repair 
-            else:
-                self.df = self.dfPacker(self.df)
-                sampleCount = int(self.layout.sampleRate.input.text())
-                if datatype == ".csv":
-                    if self.df.get(self.columnName[0]).size <= sampleCount or sampleCount == 0:
+        try:
+            if path != "":
+                if datatype == ".png" or datatype == ".jpg" or datatype == ".pdf":
+                    self.fig.savefig(path)
+                else:
+                    self.df = self.dfPacker(self.df)
+                    print(self.df.columns)
+                    if datatype == ".csv":
                         self.df.to_csv(r"" + path, index=False)
-                    else:
-                        uebergabeDF = self.sampleDown(self.df, sampleCount)
-                        uebergabeDF.to_csv(r"" + path, index=False)
-                elif datatype == ".xlsx":
-                    if self.df.get(self.columnName[0]).size <= sampleCount or sampleCount == 0:
+                    elif datatype == ".xlsx":
                         self.df.to_excel(r"" + path, index=False)
-                    else:
-                        uebergabeDF = self.sampleDown(self.df, sampleCount)
-                        uebergabeDF.to_excel(r"" + path, index=False)
-        self.close()
+                self.close()
+        except PermissionError:
+            self.errorBox = return_message_box.SaveErrorPermissionDeniedBox()
+            self.errorBox.exec_()
+        except Exception as ex:
+            self.errorBox = return_message_box.SomethingWentWrong()
+            self.errorBox.exec_()
 
     def dfPacker(self, df):
         x, y = self.dfToXYArr(df)
+        print(y)
         deleteArray = []
         for i in y:
             yTotalEmpty = self.isEmpty(i)
@@ -90,85 +93,36 @@ class ExportScreen(qt.QMainWindow):
             if self.isEmpty(y[i]):
                pass
             else:
-                dataFrame.insert(len(dataFrame.columns), self.columnName[1+i], y[i], True)
+                dataFrame.insert(len(dataFrame.columns), self.columnName[i+1], y[i], True)
         return dataFrame
 
     def isEmpty(self, arr):
         for i in arr:
             print(i)
-            if not math.isnan(i):
+            if type(i) == str or not math.isnan(i):
                 return False
         return True
 
     def dfToXYArr(self, df):
         cols = df.columns
+        print(cols)
         y = []
         for col in cols:
             if col in self.columnName[0]:
                 x = df[col].copy().tolist()
             elif col in self.columnName[1:]:
+                print(col)
                 y.append([])
                 y[-1] = df[col].copy().tolist()
             elif col == "":
                 y[-1] = df[col].copy().tolist()
         return x, y
 
-
-    def sampleDown(self, df, sampleCount, customColNames=None):
-        x_ueb = []
-        y_ueb = []
-        x, y = self.dfToXYArr(df)
-        lenX = len(x)
-        for i in range(len(y)):
-            y_ueb.append([])
-        count = 0
-
-        for i in range(sampleCount):
-            x_ueb.append(x[int(count)])
-            for j in range(len(y_ueb)):
-                y_ueb[j].append(y[j][int(count)])
-            count += lenX / sampleCount
-        dataFrame = pd.DataFrame()
-        if customColNames is None:
-            dataFrame.insert(0, self.columnName[0], x_ueb, True)
-            for i in range(len(y)):
-                dataFrame.insert(len(dataFrame.columns), self.columnName[1+i], y_ueb[i], True)
-        else:
-            dataFrame.insert(0, customColNames[0], x_ueb, True)
-            for i in range(len(y)):
-                dataFrame.insert(len(dataFrame.columns), customColNames[1 + i], y_ueb[i], True)
-        return dataFrame
-
-    def exportTransistorData(self, df, sampleCount):     #Column Name => ["IB", "IC", "UCE", "UBE"]
-        ib = df[self.columnName[0]].copy().tolist()
-        ic = df[self.columnName[1]].copy().tolist()
-        uce = df[self.columnName[2]].copy().tolist()
-        ube = df[self.columnName[3]].copy().tolist()
-
-        """ic2, y1 = self.mergeSort(list(ic), [list(uce), list(ib)])
-        ube2, y2 = self.mergeSort(list(ube), [list(ib), list(uce)])
-
-        dataFrame = pd.DataFrame()
-        dataFrame.insert(0, "IC", ic2, True)
-        dataFrame.insert(1, "UCE", y1[0], True)
-        dataFrame.insert(2, "IB", y1[1], True)
-        dataFrame.insert(3, "", [None]*len(ic2), True)
-        dataFrame.insert(4, "UBE", ube2, True)
-        dataFrame.insert(5, "IB", y2[0], True)
-        dataFrame.insert(6, "UCE", y2[1], True)
-        """
-
-        if len(df[df.columns[0]]) > sampleCount and sampleCount != 0:
-            df = self.sampleDown(df, ["IC", "UCE", "IB", "", "UBE", "IB", "UCE"])
-
-
-
 class LayoutCompiler(qt.QWidget):
     def __init__(self):
         super().__init__()
         self.chooseDataType = None
         self.buttonHolder = None
-        self.sampleRate = None
         self.showUI()
 
     def showUI(self):
@@ -176,23 +130,9 @@ class LayoutCompiler(qt.QWidget):
         self.setLayout(layout)
 
         self.chooseDataType = ChooseDataType()
-        self.sampleRate = SampleRate()
         self.buttonHolder = ButtonHolder()
         layout.addWidget(self.chooseDataType)
-        layout.addWidget(self.sampleRate)
         layout.addWidget(self.buttonHolder)
-
-        self.sampleRate.hide()
-
-        self.chooseDataType.comboBox.currentTextChanged.connect(self.comboChangeEvent)
-
-    def comboChangeEvent(self):
-        print(self.chooseDataType.comboBox.currentText())
-        if self.chooseDataType.comboBox.currentText() == self.chooseDataType.options[2] or self.chooseDataType.comboBox.currentText() == self.chooseDataType.options[3]:
-            self.sampleRate.show()
-        else:
-            self.sampleRate.hide()
-
 
 class ChooseDataType(qt.QWidget):
     def __init__(self):
@@ -241,22 +181,3 @@ class ButtonHolder(qt.QWidget):
 
         layout.addWidget(self.saveButton)
         layout.addWidget(self.cancelButton)
-
-class SampleRate(qt.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.input = None
-        self.initUI()
-
-    def initUI(self):
-        layout = qt.QHBoxLayout()
-        self.setLayout(layout)
-        label = qt.QLabel("Choose Sample Rate (0 = All): ")
-        label.setFixedWidth(200)
-        self.input = qt.QLineEdit()
-        self.input.setValidator(qtgui.QIntValidator())
-        self.input.setText("0")
-
-        layout.addWidget(label)
-        layout.addWidget(self.input)
-
