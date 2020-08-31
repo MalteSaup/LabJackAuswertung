@@ -43,9 +43,10 @@ class TransistorScreen(qt.QWidget):
 
         self.measureData = [[], [], [], []]
         self.measurePorts = self.measureSettings.measurePorts
-        self.measurePointForMeasureData = []
+        self.measureSeriesForMeasureData = []
 
         self.t = None
+        self.tLabelThread = None
 
         self.r1 = self.measureSettings.r1
         self.r2 = self.measureSettings.r2
@@ -69,8 +70,9 @@ class TransistorScreen(qt.QWidget):
         self.notStopped = True
 
         self.timer = None
+        self.timerLabel = None
 
-        self.measurePointCount = 1
+        self.measureSeriesCount = 1
 
         self.running = False
         self.stopped = False
@@ -104,7 +106,7 @@ class TransistorScreen(qt.QWidget):
 
         self.lbh.returnButton.pressed.connect(self.initMessageBox)
         self.lbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
-        self.lbh.addMeasurePointButton.pressed.connect(self.addMeasurePoint)
+        self.lbh.addMeasureSeriesButton.pressed.connect(self.addMeasureSeries)
 
         self.lbh.setFixedWidth(self.minWidthWidget)
         self.plt.resize(self.minWidthWidget, self.supportClass.container.geometry().height() * 0.9)
@@ -145,7 +147,7 @@ class TransistorScreen(qt.QWidget):
 
     def updateDataset(self):
         if self.notStopped and not self.stopped:
-            self.measurePointForMeasureData.append(self.measurePointCount)
+            self.measureSeriesForMeasureData.append(self.measureSeriesCount)
             uebergabe = self.supportClass.device.readRegister(0, 16)
             uebergabeData = []
             uebergabeData.append(abs(uebergabe[0] - uebergabe[1]))
@@ -158,14 +160,14 @@ class TransistorScreen(qt.QWidget):
             self.measureData[2].append((abs(uebergabeData[self.measurePorts[2]])))
             self.measureData[3].append((abs(uebergabeData[self.measurePorts[3]])) / self.r1 * self.mikro)
 
-    def addMeasurePoint(self):
+    def addMeasureSeries(self):
         if self.notStopped:
-            self.measurePointCount += 1
-            self.lbh.measurePointsValueLabel.setText(str(self.measurePointCount))
+            self.measureSeriesCount += 1
+            self.lbh.measureSeriesValueLabel.setText(str(self.measureSeriesCount))
             self.resizeWidgets()
 
-    def addCalcResults(self, measurePoint, amount, b, uearly):
-        resultWidget = tmscrw.CalcResultWidget(measurePoint, b, uearly, amount)
+    def addCalcResults(self, measureSeries, amount, b, uearly):
+        resultWidget = tmscrw.CalcResultWidget(measureSeries, b, uearly, amount)
         self.tcw.calcResultHolder.layout.addWidget(resultWidget)
 
     def startMeasureButtonPressed(self):
@@ -193,12 +195,15 @@ class TransistorScreen(qt.QWidget):
         self.t = threading.Thread(target=self.measureClock())
         self.t.start()
 
+        self.tLabelThread = threading.Thread(target=self.startUpdateLabel())
+        self.tLabelThread.start()
+
     def stopMeasure(self):
         self.lbh.startMeasureButton.setText("Start Measure")
 
         self.stopped = True
 
-        self.tcw = tmscw.TransistorMeasureScreenCalcWidget(self.measurePointCount)
+        self.tcw = tmscw.TransistorMeasureScreenCalcWidget(self.measureSeriesCount)
         self.layout.addWidget(self.tcw, 0, 1)
         self.tcw.setFixedWidth(self.minWidthWidget)
         self.settingWidgets = 2
@@ -224,29 +229,29 @@ class TransistorScreen(qt.QWidget):
             self.exportScreen.show()
 
     def calcClick(self):
-        measurePoint = self.tcw.chooseDropDown.currentIndex()
-        print(measurePoint)
+        measureSeries = self.tcw.chooseDropDown.currentIndex()
+        print(measureSeries)
         uce = None
         ic = None
         ib = None
-        if measurePoint == 1:
+        if measureSeries == 1:
             uce = self.measureData[1]
             ic = self.measureData[0]
             ib = self.measureData[3]
-        elif measurePoint == 0:
+        elif measureSeries == 0:
             self.calcAll()
         else:
             lower = 0
             upper = 0
-            if measurePoint - 1 == 1:
+            if measureSeries - 1 == 1:
                 try:
-                    upper = self.measurePointForMeasureData.index(measurePoint)
+                    upper = self.measureSeriesForMeasureData.index(measureSeries)
                 except:
                     upper = None
             else:
-                lower = self.measurePointForMeasureData.index(measurePoint - 2)
+                lower = self.measureSeriesForMeasureData.index(measureSeries - 2)
                 try:
-                    upper = self.measurePointForMeasureData.index(measurePoint)
+                    upper = self.measureSeriesForMeasureData.index(measureSeries)
                 except:
                     upper = None
             print("u" + str(upper))
@@ -262,25 +267,25 @@ class TransistorScreen(qt.QWidget):
         if uearly is None:
             print("ERROR IN UEALRY CALC")
             uearly = "ERROR"
-        if measurePoint == 0:
+        if measureSeries == 0:
             measureText = "All Values"
         else:
-            measureText = str(measurePoint - 1)
+            measureText = str(measureSeries - 1)
         self.addCalcResults(measureText, len(uce), b, uearly)
 
     def calcAll(self):
         lower = 0
         upper = 0
-        for i in range(1, self.measurePointCount + 1):
+        for i in range(1, self.measureSeriesCount + 1):
             if i - 1 == 0:
                 try:
-                    upper = self.measurePointForMeasureData.index(i + 1)
+                    upper = self.measureSeriesForMeasureData.index(i + 1)
                 except:
-                    upper = len(self.measurePointForMeasureData) - 1
+                    upper = len(self.measureSeriesForMeasureData) - 1
             else:
                 lower = upper
                 try:
-                    upper = self.measurePointForMeasureData.index(i + 1)
+                    upper = self.measureSeriesForMeasureData.index(i + 1)
                 except:
                     upper = None
 
@@ -303,8 +308,8 @@ class TransistorScreen(qt.QWidget):
         if self.timer is not None:
             self.timer.stop()
 
-        if self.timer is not None:
-            self.timer.stop()
+        if self.timerLabel is not None:
+            self.timerLabel.stop()
 
         if self.plt.timer is not None:
             self.plt.timer.stop()
@@ -315,7 +320,7 @@ class TransistorScreen(qt.QWidget):
     def createExportData(self):
         if self.plt.checkLength()[0]:
             data_ueb = []
-            data_ueb.append(self.measurePointForMeasureData.copy())
+            data_ueb.append(self.measureSeriesForMeasureData.copy())
             data_ueb += self.measureData
             fig_ueb = self.plt.canvas.figure
             dataFrame = pd.DataFrame()
@@ -331,6 +336,22 @@ class TransistorScreen(qt.QWidget):
             timerCreateExData.setSingleShot(True)
             timerCreateExData.start(100)
             return None, None
+
+    def startUpdateLabel(self):
+        self.timerLabel = qtcore.QTimer(self)
+        self.timerLabel.timeout.connect(self.updateDataLabel)
+        self.timerLabel.start(150)
+
+    def updateDataLabel(self):
+        self.lbh.icValLabelRaw.setText(str(self.measureData[0][-1] / self.milli * self.r2) + "V")
+        self.lbh.icValLabelProcessed.setText(str(self.measureData[0][-1]) + "mA")
+        self.lbh.icValLabelRaw.setText(str(self.measureData[3][-1] / self.mikro * self.r1) + "V")
+        self.lbh.ibValLabelProcessed.setText(str(self.measureData[3][-1]) + "uA")
+
+        self.lbh.uceValLabelRaw.setText(str(self.measureData[1][-1]) + "V")
+        self.lbh.uceValLabelProcessed.setText(str(self.measureData[1][-1]) + "V")
+        self.lbh.ubeValLabelRaw.setText(str(self.measureData[2][-1]) + "V")
+        self.lbh.ubeValLabelProcessed.setText(str(self.measureData[2][-1]) + "V")
 
     def initTCW(self):
         self.tcw.calcButton.pressed.connect(self.calcClick)

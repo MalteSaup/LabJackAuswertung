@@ -29,7 +29,7 @@ class MeasureScreen(qt.QWidget):
 
         self.xue = []
         self.yue = []
-        self.measurePoints = []
+        self.measureSeries = []
 
         self.supportClass = supportClass
         self.settings = None
@@ -44,7 +44,7 @@ class MeasureScreen(qt.QWidget):
         self.functionCode = functionCode
         self.count = 0
 
-        self.measurePointCount = 1
+        self.measureSeriesCount = 1
 
         self.mVtoV = 1000
         self.mAtoA = 1000
@@ -77,7 +77,7 @@ class MeasureScreen(qt.QWidget):
             self.measureClock()
         elif self.functionCode == 1:
             self.settings.startMeasureButton.clicked.connect(self.startMeasure)
-            self.settings.addMeasurePointButton.clicked.connect(self.addMeasurePoint)
+            self.settings.addMeasureSeriesButton.clicked.connect(self.addMeasureSerie)
 
         self.settings.setFixedWidth(self.minWidthWidget)
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
@@ -89,10 +89,10 @@ class MeasureScreen(qt.QWidget):
         elif self.functionCode == 1:
             self.returnToSettingsScreen()
 
-    def addMeasurePoint(self):
+    def addMeasureSerie(self):
         print("Click")
-        self.measurePointCount += 1
-        self.settings.measurePointLabel.setText("Measure Points: " + str(self.measurePointCount))
+        self.measureSeriesCount += 1
+        self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
         self.resizeWidgets()
@@ -128,7 +128,7 @@ class MeasureScreen(qt.QWidget):
                 self.count += 1
             elif self.functionCode == 1:
                 multiplication = self.mVtoV / self.supportClass.measureSettings.r2
-                self.measurePoints.append(self.measurePointCount)
+                self.measureSeries.append(self.measureSeriesCount)
                 if index <= 1:
                     self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]))
                 elif index == 2:
@@ -190,10 +190,10 @@ class MeasureScreen(qt.QWidget):
         if self.plt.checkXYLength()[0]:
             x_ueb = list(self.ax_x)
             y_ueb = copy.deepcopy(self.ax_y)
-            measurePointDate = list(self.measurePoints)
+            measureSeriesDate = list(self.measureSeries)
             fig_ueb = self.plt.canvas.figure
             dataFrame = pd.DataFrame()
-            dataFrame.insert(0, "Measure Point", measurePointDate, True)
+            dataFrame.insert(0, "Measure Serie", measureSeriesDate, True)
             dataFrame.insert(1, "x0", x_ueb, True)
 
             for i in range(len(y_ueb)):

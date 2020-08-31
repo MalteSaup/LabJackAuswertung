@@ -5,10 +5,10 @@ import PyQt5.QtCore as qtcore
 
 
 class TransistorMeasureScreenCalcWidget(qt.QWidget):
-        def __init__(self, amountOfMeasurePoints):
+        def __init__(self, amountOfMeasureSeries):
             super().__init__()
 
-            self.amountOfMeasurePoints = amountOfMeasurePoints
+            self.amountOfMeasureSeries = amountOfMeasureSeries
             self.calcResultHolder = None
             self.calcButton = None
             self.chooseDropDown = None
@@ -44,8 +44,8 @@ class TransistorMeasureScreenCalcWidget(qt.QWidget):
             options = []
             options.append("All")
             options.append("All Together")
-            for i in range(self.amountOfMeasurePoints):
-                options.append("Measurepoint: " + str(i+1))
+            for i in range(self.amountOfMeasureSeries):
+                options.append("Measure Serie: " + str(i+1))
             return options
 
 

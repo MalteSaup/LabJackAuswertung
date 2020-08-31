@@ -8,8 +8,8 @@ class Settings(qt.QWidget):
         super().__init__()
         self.startMeasureButton = None
         self.returnButton = None
-        self.addMeasurePointButton = None
-        self.measurePointLabel = None
+        self.addMeasureSeriesButton = None
+        self.measureSeriesLabel = None
         self.checkBoxes = []
         self.xAxisPlot = xAxisPlot
         self.functionCode = functionCode
@@ -24,7 +24,7 @@ class Settings(qt.QWidget):
         layout = qt.QGridLayout()
 
         xAxisPlotLabel = qt.QLabel("X-Axis Plotted Channel: " + str(self.xAxisPlot))
-        self.measurePointLabel = qt.QLabel("Measure Points: 1")
+        self.measureSeriesLabel = qt.QLabel("Measure Series: 1")
 
         self.channel1Check = qt.QCheckBox("Channel 1", self)
         self.channel2Check = qt.QCheckBox("Channel 2", self)
@@ -37,7 +37,7 @@ class Settings(qt.QWidget):
         self.checkBoxes.append(self.channel4Check)
 
         self.startMeasureButton = qt.QPushButton("Start Measurement")
-        self.addMeasurePointButton = qt.QPushButton("Add Measure Point")
+        self.addMeasureSeriesButton = qt.QPushButton("Add Measure Serie")
         self.returnButton = qt.QPushButton("Return")
 
         layout.addWidget(self.channel1Check, 1, 0)
@@ -48,9 +48,9 @@ class Settings(qt.QWidget):
 
         if self.functionCode == 1:
             layout.addWidget(xAxisPlotLabel, 0, 0)
-            layout.addWidget(self.measurePointLabel, 5, 0)
+            layout.addWidget(self.measureSeriesLabel, 5, 0)
             layout.addWidget(self.startMeasureButton, 6, 0, 1, 2)
-            layout.addWidget(self.addMeasurePointButton, 7, 0, 1, 2)
+            layout.addWidget(self.addMeasureSeriesButton, 7, 0, 1, 2)
 
         self.setLayout(layout)
 
