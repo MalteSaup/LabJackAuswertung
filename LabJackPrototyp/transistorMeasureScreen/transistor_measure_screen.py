@@ -97,7 +97,7 @@ class TransistorScreen(qt.QWidget):
         self.layout = qt.QGridLayout()
         self.lbh = tmssw.LabelHolder(self.supportClass.options, self.measurePorts)
         # self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
-        self.plt = tmspw.TransistorMeasureScreenWidget(self.measureData, [self.uceMin, self.uceMax],
+        self.plt = tmspw.TransistorMeasureScreenWidget(self.measureData, self.measureSeriesForMeasureData,[self.uceMin, self.uceMax],
                                                        [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel,
                                                        self.ubeTicks, self.ubeTicksLabel)
         self.layout.addWidget(self.lbh, 0, 0)
@@ -177,6 +177,10 @@ class TransistorScreen(qt.QWidget):
             resultWidget = tmscrw.CalcResultWidget(measureSeries, b, uearly, amount)
             self.tcw.calcResultHolder.layout.addWidget(resultWidget)
 
+            if self.tcw.chooseDropDown.currentIndex() > 1:
+                self.plt.b = b
+                self.plt.measureSeriesToDisplay = int(measureSeries)
+
     def doesResultExist(self, measureSeries):
         for result in self.calcResults:
             if measureSeries == result.measureSerie:
@@ -194,6 +198,9 @@ class TransistorScreen(qt.QWidget):
 
     def startMeasure(self):
         self.measurePorts = self.measurePorts
+
+        self.plt.measureSeriesToDisplay = 0
+        self.plt.b = None
 
         if self.tcw is not None:
             self.tcw.setParent(None)
@@ -218,6 +225,7 @@ class TransistorScreen(qt.QWidget):
         self.stopped = True
 
         self.tcw = tmscw.TransistorMeasureScreenCalcWidget(self.measureSeriesCount)
+        self.tcw.chooseDropDown.currentIndexChanged.connect(self.comboChangeEvent)
         self.layout.addWidget(self.tcw, 0, 1)
         self.tcw.setFixedWidth(self.minWidthWidget)
         self.settingWidgets = 2
@@ -225,6 +233,21 @@ class TransistorScreen(qt.QWidget):
         self.initTCW()
 
         qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
+
+    def comboChangeEvent(self):
+        if self.tcw.chooseDropDown.currentIndex() < 2:
+            self.plt.measureSeriesToDisplay = 0
+            self.plt.b = None
+        else:
+            self.plt.measureSeriesToDisplay = self.tcw.chooseDropDown.currentIndex() - 1
+            bSet = False
+            for calcResult in self.calcResults:
+                if int(calcResult.measureSerie) == self.tcw.chooseDropDown.currentIndex() - 1:
+                    self.plt.b = calcResult.b
+                    bSet = True
+                    break
+            if not bSet:
+                self.plt.b = None
 
     def measureClock(self):
         self.timer = qtcore.QTimer(self)
@@ -261,23 +284,24 @@ class TransistorScreen(qt.QWidget):
                 try:
                     upper = self.measureSeriesForMeasureData.index(measureSeries)
                 except:
-                    upper = None
+                    upper = -1
             else:
-                lower = self.measureSeriesForMeasureData.index(measureSeries - 2)
+                lower = self.measureSeriesForMeasureData.index(measureSeries - 1)
                 try:
                     upper = self.measureSeriesForMeasureData.index(measureSeries)
                 except:
-                    upper = None
+                    upper = -1
             print("u" + str(upper))
             print("l" + str(lower))
             uce = self.measureData[1][lower:upper]
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
+
         if uce is None or ic is None or ib is None:
             print("ERROR WITH VALUE INIT")
             return
         uearly, n = self.calculator.leastSquare(uce, ic)
-        b = self.calculator.calcB(self.measureData[0], self.measureData[3])
+        b = self.calculator.calcB(ic, ib)
         if uearly is None:
             print("ERROR IN UEALRY CALC")
             uearly = "ERROR"
@@ -295,7 +319,7 @@ class TransistorScreen(qt.QWidget):
                 try:
                     upper = self.measureSeriesForMeasureData.index(i + 1)
                 except:
-                    upper = len(self.measureSeriesForMeasureData) - 1
+                    upper = -1
             else:
                 lower = upper
                 try:
@@ -303,15 +327,13 @@ class TransistorScreen(qt.QWidget):
                 except:
                     upper = None
 
-            print("L" + str(lower))
-            print("U" + str(upper))
-
             uce = self.measureData[1][lower:upper]
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
 
             uearly, n = self.calculator.leastSquare(uce, ic)
             b = self.calculator.calcB(ic, ib)
+
             if uearly is None:
                 print("ERROR IN UEALRY CALC")
                 uearly = "ERROR"

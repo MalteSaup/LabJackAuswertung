@@ -4,7 +4,7 @@ import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
 import copy
-
+from datetime import datetime
 
 import matplotlib.backends.qt_compat as qtplt
 import matplotlib.figure as fig
@@ -15,7 +15,7 @@ else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
 
 class TransistorMeasureScreenWidget(qt.QWidget):
-    def __init__(self, measureData, uceMinMax, ubeMinMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel):
+    def __init__(self, measureData, measureSeriesForMeasureData, uceMinMax, ubeMinMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel):
         super().__init__()
 
         self.stopped = False
@@ -27,13 +27,21 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
         self.canvas = None
 
+        self.b = None
+
         self.measureData = measureData
+        self.measureSeriesForMeasureData = measureSeriesForMeasureData
         self.uceTick = uceTick
         self.ubeTick = ubeTick
         self.uceTickLabel = uceTickLabel
         self.ubeTickLabel = ubeTickLabel
         self.uceMinMax = uceMinMax
         self.ubeMinMax = ubeMinMax
+        self.ibMax = 250
+
+        self.now = datetime.now().date()
+
+        self.measureSeriesToDisplay = 0
 
         self.initUI()
 
@@ -55,10 +63,24 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.initAxes()
         self.setLayout(layout)
 
+    def createBData(self):
+        bDataIb = []
+        bDataIc = []
+        count = 0
+        step = self.ibMax / 100
+        for i in range(100):
+            bDataIb.append(count)
+            bDataIc.append(count * self.b / 1000)
+            count += step
+        return [bDataIb, bDataIc]
+
     def animation(self):
         sameLength, arrUeb = self.checkLength()
         #print(sameLength)
         if sameLength:
+            bData = None
+            if self.measureSeriesToDisplay != 0 and self.b is not None:
+                bData = self.createBData()
 
             length = len(arrUeb)
             emptyArr = [None] * length
@@ -83,9 +105,16 @@ class TransistorMeasureScreenWidget(qt.QWidget):
             self.axes[1].plot(uceCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
             self.axes[2].plot(ibCross, ubeCross, color="yellow", linestyle="None", marker="X", markersize=4)
 
+            self.axes[3].plot(ibCross, ibCross, color="white", linestyle="None", marker="None", markersize=0, label=self.now)
+            self.axes[3].legend()
+
+            if bData is not None:
+                self.axes[0].plot(bData[0], bData[1], color="white", linestyle="-", marker="None")
+
+
         self.canvas.figure.canvas.draw()
 
-    def initAxes(self):
+    def initAxes(self, showTimestamp = None):
         self.axes[0].spines["top"].set_color("none")
         self.axes[0].spines["left"].set_color("none")
         self.axes[0].set_xlim(0, 200)
@@ -113,6 +142,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[2].invert_yaxis()
         self.axes[2].xaxis.tick_top()
 
+
         self.axes[3].spines["right"].set_color("none")
         self.axes[3].spines["bottom"].set_color("none")
         self.axes[3].set_xticks(self.uceTick)
@@ -137,4 +167,31 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         for i in range(len(arr_ueb)):
             if not length == len(arr_ueb[i]):
                 sameLength = False
+
+        if self.measureSeriesToDisplay == 0:
+            return sameLength, arr_ueb
+        if self.measureSeriesToDisplay == 1:
+            try:
+                indexMax = self.measureSeriesForMeasureData.index(2)
+                for i in range(len(arr_ueb)):
+                    arr_ueb[i] = arr_ueb[i][:indexMax]
+            except:
+                print("Only one measure serie")
+        elif self.measureSeriesToDisplay == self.measureSeriesForMeasureData[-1]:
+            indexMin = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
+            for i in range(len(arr_ueb)):
+                arr_ueb[i] = arr_ueb[i][indexMin:]
+        else:
+            indexMin = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
+            try:
+                indexMax = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 1)
+            except:
+                try:
+                    indexMax = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 2)
+                except:
+                    print("Neither the next nor the second next has any values, I take the last Value of array for you")
+                    indexMax = -1
+
+            for i in range(len(arr_ueb)):
+                arr_ueb[i] = arr_ueb[i][indexMin:indexMax]
         return sameLength, arr_ueb

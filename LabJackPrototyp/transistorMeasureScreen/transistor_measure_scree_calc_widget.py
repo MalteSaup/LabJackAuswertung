@@ -25,7 +25,7 @@ class TransistorMeasureScreenCalcWidget(qt.QWidget):
             scroll.setWidgetResizable(True)
 
             self.calcResultHolder = CalcResultHolder()
-            self.calcButton = qt.QPushButton("Calculate")
+            self.calcButton = qt.QPushButton("Estimate")
             self.chooseDropDown = qt.QComboBox()
 
             for option in options:
