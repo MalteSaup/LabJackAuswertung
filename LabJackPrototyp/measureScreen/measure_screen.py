@@ -160,12 +160,12 @@ class MeasureScreen(qt.QWidget):
 
     def saveClick(self):
         self.notStopped = False
-        df, fig = self.createExportData()
+        df, fig, columnNames = self.createExportData()
         if df is None and fig is None:
             pass
         else:
             self.notStopped = True
-            self.exportScreen = export_screen.ExportScreen(df, fig)
+            self.exportScreen = export_screen.ExportScreen(df, fig, columnNames)
             self.exportScreen.show()
 
     def returnToMainScreen(self):
@@ -192,17 +192,26 @@ class MeasureScreen(qt.QWidget):
         if self.plt.checkXYLength()[0]:
             x_ueb = list(self.ax_x)
             y_ueb = copy.deepcopy(self.ax_y)
-            measureSeriesDate = list(self.measureSeries)
+
             fig_ueb = self.plt.canvas.figure
             dataFrame = pd.DataFrame()
-            dataFrame.insert(0, "Measure Serie", measureSeriesDate, True)
-            dataFrame.insert(1, "XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort), x_ueb, True)
 
+            columnNames = []
+
+            if self.functionCode == 1:
+                measureSeriesDate = list(self.measureSeries)
+                dataFrame.insert(0, "Measure Serie", measureSeriesDate, True)
+                dataFrame.insert(1, "XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort), x_ueb, True)
+                columnNames.append("Measure Serie")
+                columnNames.append("XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort))
+            else:
+                dataFrame.insert(0, "Ticks Passed", x_ueb, True)
+                columnNames.append("Ticks Passed")
             for i in range(len(y_ueb)):
                 if self.settings.checkBoxes[i].isChecked():
                     dataFrame.insert(len(dataFrame.columns), "Channel " + str(i + 1), y_ueb[i], True)
-
-            return dataFrame, fig_ueb
+                    columnNames.append("Channel " + str(i + 1))
+            return dataFrame, fig_ueb, columnNames
 
         else:
             timerCreateExData = qtcore.QTimer(self)
