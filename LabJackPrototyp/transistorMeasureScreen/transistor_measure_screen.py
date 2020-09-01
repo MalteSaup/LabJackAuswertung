@@ -411,6 +411,7 @@ class TransistorScreen(qt.QWidget):
                 data.append("Measure Point Amount: " + str(calcResult.measurePointCount))
                 data.append("")
             return data
+
     def startUpdateLabel(self):
         self.timerLabel = qtcore.QTimer(self)
         self.timerLabel.timeout.connect(self.updateDataLabel)
@@ -420,7 +421,7 @@ class TransistorScreen(qt.QWidget):
         self.lbh.icValLabelRaw.setText("{:.3f}".format(self.measureData[0][-1] / self.milli * self.r2) + "V")
         self.lbh.icValLabelProcessed.setText("{:.3f}".format(self.measureData[0][-1]) + "mA")
         self.lbh.ibValLabelRaw.setText("{:.3f}".format(self.measureData[3][-1] / self.mikro * self.r1) + "V")
-        self.lbh.ibValLabelProcessed.setText("{:.3f}".format(self.measureData[3][-1]) + "uA")
+        self.lbh.ibValLabelProcessed.setText("{:.3f}".format(self.measureData[3][-1]) + "µA")
 
         self.lbh.uceValLabelRaw.setText("{:.3f}".format(self.measureData[1][-1]) + "V")
         self.lbh.uceValLabelProcessed.setText("{:.3f}".format(self.measureData[1][-1]) + "V")

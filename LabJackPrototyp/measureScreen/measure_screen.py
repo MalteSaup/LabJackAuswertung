@@ -11,9 +11,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import export_screen
+import return_message_box
 
 from measureScreen import measure_screen_plot_widget as mspw, measure_screen_settings_widget as mssw
-
 
 
 class MeasureScreen(qt.QWidget):
@@ -64,7 +64,7 @@ class MeasureScreen(qt.QWidget):
 
         self.checkboxes = self.settings.checkBoxes
 
-        self.settings.returnButton.clicked.connect(self.returnButtonPressed)
+        self.settings.returnButton.clicked.connect(self.initMessageBox)
 
         self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.settings.checkBoxes, self.functionCode)
 
@@ -83,14 +83,16 @@ class MeasureScreen(qt.QWidget):
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
         self.setLayout(layout)
 
-    def returnButtonPressed(self):
+        if self.functionCode == 1:
+            self.checkboxes[self.supportClass.measureSettings.xAxisPort].setEnabled(False)
+
+    def messageBoxButtonClick(self):
         if self.functionCode == 0:
             self.returnToMainScreen()
         elif self.functionCode == 1:
             self.returnToSettingsScreen()
 
     def addMeasureSerie(self):
-        print("Click")
         self.measureSeriesCount += 1
         self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
@@ -112,11 +114,10 @@ class MeasureScreen(qt.QWidget):
         if self.notStopped:
             uebergabe = self.supportClass.device.readRegister(0, 26)
             for i in range(4):
-                # Da 1000 mV und 1000 Ohm kann Berechnung vernachlässigt werden da 1000 / 1000 = 1
-                #TODO Problem Diodenmessung nomma sagen lassen weil wenn wiederstand nicht 1K dann nicht = 1 => nicht alles egal...
+                # TODO Problem Diodenmessung nomma sagen lassen weil wenn wiederstand nicht 1K dann nicht = 1 => nicht alles egal...
                 if self.settings.checkBoxes[i].isChecked():
                     if i <= 1:
-                        self.ax_y[i].append(abs(uebergabe[i*2] - uebergabe[i*2+1]))
+                        self.ax_y[i].append(abs(uebergabe[i * 2] - uebergabe[i * 2 + 1]))
                     elif i == 2:
                         self.ax_y[i].append(abs(uebergabe[4] - uebergabe[6]))
                     elif i == 3:
@@ -130,31 +131,32 @@ class MeasureScreen(qt.QWidget):
                 multiplication = self.mVtoV / self.supportClass.measureSettings.r2
                 self.measureSeries.append(self.measureSeriesCount)
                 if index <= 1:
-                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]))
+                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]) * multiplication)
                 elif index == 2:
-                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]))
+                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]) * multiplication)
                 elif index == 3:
-                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]))
+                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]) * multiplication)
 
     def startMeasure(self):
         if self.t is None:
+            if self.functionCode == 1:
+                self.settings.startMeasureButton.setText("Stop Measurement")
+                self.notStopped = True
             self.t = threading.Thread(target=self.measureClock(self.supportClass.measureSettings.xAxisPort))
             self.t.start()
-            if self.functionCode == 1:
-                self.settings.startMeasureButton.setText = "Stop Measurement"
         else:
-            print("WASRUM")
             if self.notStopped:
                 self.notStopped = False
-                self.settings.startMeasureButton.setText = "Start Measurement"
+                self.settings.startMeasureButton.setText("Start Measurement")
             else:
                 self.notStopped = True
-                self.settings.startMeasureButton.setText = "Stop Measurement"
+                self.settings.startMeasureButton.setText("Stop Measurement")
 
     def measureClock(self, index=-1):
         self.timer = qtcore.QTimer(self)
         self.timer.timeout.connect(lambda: self.updateDataset(index))
         self.timer.start(self.samplerate)
+        self.startUpdateLabel()
 
     def saveClick(self):
         self.notStopped = False
@@ -194,11 +196,11 @@ class MeasureScreen(qt.QWidget):
             fig_ueb = self.plt.canvas.figure
             dataFrame = pd.DataFrame()
             dataFrame.insert(0, "Measure Serie", measureSeriesDate, True)
-            dataFrame.insert(1, "x0", x_ueb, True)
+            dataFrame.insert(1, "XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort), x_ueb, True)
 
             for i in range(len(y_ueb)):
                 if self.settings.checkBoxes[i].isChecked():
-                    dataFrame.insert(len(dataFrame.columns), "Channel " + str(i+1), y_ueb[i], True)
+                    dataFrame.insert(len(dataFrame.columns), "Channel " + str(i + 1), y_ueb[i], True)
 
             return dataFrame, fig_ueb
 
@@ -209,4 +211,27 @@ class MeasureScreen(qt.QWidget):
             timerCreateExData.start(100)
             return None, None
 
+    def initMessageBox(self):
+        self.messageBox = return_message_box.ReturnMessageBox()
+        self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
+        self.messageBox.exec_()
 
+    def startUpdateLabel(self):
+        self.timerLabel = qtcore.QTimer(self)
+        self.timerLabel.timeout.connect(self.updateDataLabel)
+        self.timerLabel.start(250)
+
+    def updateDataLabel(self):
+        if self.functionCode == 1:
+            self.settings.channelData[self.supportClass.measureSettings.xAxisPort][0].setText(
+                "{:.3f}".format(self.ax_x[-1] / self.mVtoV * self.supportClass.measureSettings.r2) + "V")
+            self.settings.channelData[self.supportClass.measureSettings.xAxisPort][1].setText(
+                "{:.3f}".format(self.ax_x[-1]) + "mA")
+
+        for i in range(4):
+            if self.checkboxes[i].isChecked():
+                self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+                self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+            elif i != self.supportClass.measureSettings.xAxisPort:
+                self.settings.channelData[i][0].setText("-")
+                self.settings.channelData[i][1].setText("-")

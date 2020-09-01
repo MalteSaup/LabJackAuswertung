@@ -19,10 +19,10 @@ class Fenster(qt.QMainWindow):
     def initUI(self):
         options = [
             "None",
-            "Kanal 1",
-            "Kanal 2",
-            "Kanal 3",
-            "Kanal 4"
+            "Channel 1",
+            "Channel 2",
+            "Channel 3",
+            "Channel 4"
         ]
 
         self.setWindowTitle("HAW LabJack")
