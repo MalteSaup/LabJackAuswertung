@@ -62,6 +62,7 @@ class ExportScreen(qt.QMainWindow):
             self.errorBox = return_message_box.SaveErrorPermissionDeniedBox()
             self.errorBox.exec_()
         except Exception as ex:
+            print(ex)
             self.errorBox = return_message_box.SomethingWentWrong()
             self.errorBox.exec_()
 

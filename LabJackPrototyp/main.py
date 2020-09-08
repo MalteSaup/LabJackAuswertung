@@ -2,10 +2,12 @@ import os
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
+import PyQt5.QtCore as qtcore
 
 import main_screen
 import support_class
 import export_screen
+
 
 class Fenster(qt.QMainWindow):
     def __init__(self):
@@ -66,8 +68,9 @@ class Fenster(qt.QMainWindow):
             self.supportClass.currentScreen.resizeWidgets()
 
 global dpi
-
+qt.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
 app = qt.QApplication([])
+
 screen = app.screens()[0]
 dpi = screen.physicalDotsPerInch()
 
