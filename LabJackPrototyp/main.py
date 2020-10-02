@@ -53,6 +53,9 @@ class Fenster(qt.QMainWindow):
         #mainScreen = measure_screen.LayoutCompiler(self.supportClass)
         self.setCentralWidget(mainScreen)
         #self.takeCentralWidget()
+
+        self.setMinimumWidth(570)
+
         self.show()
 
     def saveClick(self):
