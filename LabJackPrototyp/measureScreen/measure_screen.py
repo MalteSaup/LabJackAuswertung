@@ -85,6 +85,7 @@ class MeasureScreen(qt.QWidget):
 
         if self.functionCode == 1:
             self.checkboxes[self.supportClass.measureSettings.xAxisPort].setEnabled(False)
+            self.checkboxes[self.supportClass.measureSettings.xAxisPort].setChecked(True)
 
     def messageBoxButtonClick(self):
         if self.functionCode == 0:
@@ -97,18 +98,8 @@ class MeasureScreen(qt.QWidget):
         self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
-        self.resizeWidgets()
+        self.supportClass.resizeWidgets(self.plt)
         super().resizeEvent(a0)
-
-    def resizeWidgets(self):
-        width = self.supportClass.container.geometry().width()
-        height = self.supportClass.container.geometry().height() * 0.9
-        if (width / 5) < self.minWidthWidget:
-            newWidthCanvas = width - self.minWidthWidget
-        else:
-            newWidthCanvas = width * 4 / 5
-        if self.plt is not None:
-            self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
     def updateDataset(self, index):
         if self.notStopped:
@@ -238,7 +229,7 @@ class MeasureScreen(qt.QWidget):
                 "{:.3f}".format(self.ax_x[-1]) + "mA")
 
         for i in range(4):
-            if self.checkboxes[i].isChecked():
+            if self.checkboxes[i].isChecked() and (i != self.supportClass.measureSettings.xAxisPort or self.functionCode != 1):
                 self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
                 self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
             elif i != self.supportClass.measureSettings.xAxisPort:

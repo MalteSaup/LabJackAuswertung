@@ -120,18 +120,8 @@ class TransistorScreen(qt.QWidget):
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
-        self.resizeWidgets()
+        self.supportClass.resizeWidgets(self.plt)
         super().resizeEvent(a0)
-
-    def resizeWidgets(self):
-        width = self.supportClass.container.geometry().width()
-        height = self.supportClass.container.geometry().height() * 0.9
-        if (width / 5) < self.minWidthWidget * self.settingWidgets:
-            newWidthCanvas = width - self.minWidthWidget * self.settingWidgets
-        else:
-            newWidthCanvas = width * 4 / 5
-        if self.plt is not None:
-            self.plt.canvas.setGeometry(0, 0, newWidthCanvas, height)
 
     def createUceUbeTicks(self):
         uceStep = round((self.uceMax - self.uceMin) / self.uceUbeStepCount, 1)
