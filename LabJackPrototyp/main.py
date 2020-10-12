@@ -46,7 +46,7 @@ class Fenster(qt.QMainWindow):
         self.file.addAction(self.openAction)
         self.file.addAction(self.saveAction)
 
-        self.supportClass = support_class.SupportClass(self.statusBar(), self, options, dpi)
+        self.supportClass = support_class.SupportClass(self.statusBar(), self, options, screenGeometry)
 
         mainScreen = main_screen.MainScreen(self.supportClass)
         mainScreen.initUI()
@@ -70,13 +70,11 @@ class Fenster(qt.QMainWindow):
         if self.supportClass.inMeasureScreen:
             self.supportClass.currentScreen.resizeWidgets()
 
-global dpi
+global screenGeometry
 qt.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
 app = qt.QApplication([])
-
-screen = app.screens()[0]
-dpi = screen.physicalDotsPerInch()
-
+screenGeometry = app.desktop().screenGeometry()                                                                         #reads resolution of screen
+screenGeometry.setWidth(screenGeometry.width() * len(app.screens()))                                                    #multiplies width resolution of screen with amount of connected screens
 w = Fenster()
 
 os._exit(app.exec_())

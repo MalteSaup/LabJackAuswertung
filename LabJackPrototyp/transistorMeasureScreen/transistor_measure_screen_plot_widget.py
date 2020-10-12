@@ -15,7 +15,7 @@ else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
 
 class TransistorMeasureScreenWidget(qt.QWidget):
-    def __init__(self, measureData, measureSeriesForMeasureData, uceMinMax, ubeMinMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel):
+    def __init__(self, measureData, measureSeriesForMeasureData, uceMinMax, ubeMinMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel, screenGeometry):
         super().__init__()
 
         self.stopped = False
@@ -28,6 +28,8 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.canvas = None
 
         self.b = None
+
+        self.screenGeometry = screenGeometry
 
         self.measureData = measureData
         self.measureSeriesForMeasureData = measureSeriesForMeasureData
@@ -48,7 +50,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
     def initUI(self):
         layout = qt.QHBoxLayout()
 
-        self.setFixedWidth(5000)
+        self.setFixedWidth(self.screenGeometry.width())
 
 
         self.canvas = pyqtplt.FigureCanvas(fig.Figure())

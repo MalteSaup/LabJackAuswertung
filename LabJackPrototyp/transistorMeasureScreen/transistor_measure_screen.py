@@ -100,7 +100,7 @@ class TransistorScreen(qt.QWidget):
         # self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
         self.plt = tmspw.TransistorMeasureScreenWidget(self.measureData, self.measureSeriesForMeasureData,[self.uceMin, self.uceMax],
                                                        [self.ubeMin, self.ubeMax], self.uceTicks, self.uceTicksLabel,
-                                                       self.ubeTicks, self.ubeTicksLabel)
+                                                       self.ubeTicks, self.ubeTicksLabel, self.supportClass.screenGeometry)
         self.layout.addWidget(self.lbh, 0, 0)
         self.layout.addWidget(self.tcw, 0, 1)
         self.layout.addWidget(self.plt, 0, 2)
@@ -443,9 +443,6 @@ class TransistorScreen(qt.QWidget):
     def resizeWidgets(self):
         width = self.geometry().width()
         height = self.geometry().height() - self.supportClass.container.statusBar().height()
-        print("NEW WIDTH: " + str(width - self.minWidthWidget * self.widgetAmount))
-        print("WIDTH PLT: " + str(self.plt.geometry()))
-        print("  ")
         if self.plt is not None:
             #if (width - self.minWidthWidget * self.widgetAmount) > 1304:
             #    self.plt.setGeometry(self.minWidthWidget * self.widgetAmount, 0, (width - self.minWidthWidget * self.widgetAmount), height)

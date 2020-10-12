@@ -9,7 +9,7 @@ import settings_screen
 import measure_settings
 
 class SupportClass:
-    def __init__(self, statusBar, container, options, dpi):
+    def __init__(self, statusBar, container, options, screenGeometry):
 
         self.device = None
         self.runningFlag = False
@@ -18,6 +18,7 @@ class SupportClass:
         self.startMeasureButton = None
         self.container = container
         self.measureSettings = measure_settings.MeasureSettings()
+        self.screenGeometry = screenGeometry
 
         self.measureType = 0
 
@@ -106,13 +107,3 @@ class SupportClass:
     def returnToSettingsScreen(self):
        self.returnToMainScreen()
        settings_screen.SettingsScreen(self, self.measureType, self.container)
-
-    def resizeWidgets(self, plt):
-        width = self.container.geometry().width()
-        height = self.container.geometry().height() - self.container.statusBar().height()
-        print(self.minWidthWidget * self.widgetAmount)
-        print((width - self.minWidthWidget * self.widgetAmount) - self.padding)
-        print("  ")
-        if plt is not None:
-            plt.setGeometry(self.minWidthWidget * self.widgetAmount, 0, (width - self.minWidthWidget * self.widgetAmount) - self.padding, height)
-            plt.canvas.setGeometry(0, 0, (width - self.minWidthWidget * self.widgetAmount) - self.padding, height)
