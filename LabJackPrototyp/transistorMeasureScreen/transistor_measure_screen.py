@@ -16,7 +16,7 @@ from transistorMeasureScreen import transistor_measure_screen_plot_widget as tms
     transistor_measure_screen_settings_widget as tmssw, transistor_measure_screen_calc_result_widget as tmscrw, \
     transistor_measure_scree_calc_widget as tmscw
 import calculate
-import return_message_box
+import message_boxes
 import calc_result
 
 if qtplt.is_pyqt5():
@@ -68,7 +68,8 @@ class TransistorScreen(qt.QWidget):
         self.milli = 1000
         self.mikro = 1e6
 
-        self.minWidthWidget = 210
+        self.minWidthWidget = 220
+        self.pltPadding = 20
 
         self.notStopped = True
 
@@ -82,7 +83,7 @@ class TransistorScreen(qt.QWidget):
 
         self.layout = None
 
-        self.settingWidgets = 1
+        self.widgetAmount = 1
 
         self.calculator = calculate.Calculator()
 
@@ -109,18 +110,19 @@ class TransistorScreen(qt.QWidget):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
         self.supportClass.container.saveAction.setEnabled(True)
 
-        self.lbh.returnButton.pressed.connect(self.initMessageBox)
+        self.lbh.returnButton.pressed.connect(self.initReturnMessageBox)
         self.lbh.startMeasureButton.pressed.connect(self.startMeasureButtonPressed)
         self.lbh.addMeasureSeriesButton.pressed.connect(self.addMeasureSeries)
 
         self.lbh.setFixedWidth(self.minWidthWidget)
-        self.plt.resize(self.minWidthWidget, self.supportClass.container.geometry().height() * 0.9)
+        self.lbh.setContentsMargins(0, 0, 10, 0)
         self.show()
 
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
-        self.supportClass.resizeWidgets(self.plt)
+        print("YES")
+        self.resizeWidgets()
         super().resizeEvent(a0)
 
     def createUceUbeTicks(self):
@@ -196,7 +198,7 @@ class TransistorScreen(qt.QWidget):
             self.tcw.setParent(None)
             self.tcw = None
 
-        self.settingWidgets = 1
+        self.widgetAmount = 1
         qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
 
         self.stopped = False
@@ -218,7 +220,7 @@ class TransistorScreen(qt.QWidget):
         self.tcw.chooseDropDown.currentIndexChanged.connect(self.comboChangeEvent)
         self.layout.addWidget(self.tcw, 0, 1)
         self.tcw.setFixedWidth(self.minWidthWidget)
-        self.settingWidgets = 2
+        self.widgetAmount = 2
 
         self.initTCW()
 
@@ -421,11 +423,30 @@ class TransistorScreen(qt.QWidget):
     def initTCW(self):
         self.tcw.calcButton.pressed.connect(self.calcClick)
 
-    def initMessageBox(self):
-        self.messageBox = return_message_box.ReturnMessageBox()
-        self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
-        self.messageBox.exec_()
+    def initReturnMessageBox(self):
+        #self.messageBox = message_boxes.ReturnMessageBox()
+        #self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
+        #self.messageBox.exec_()
+        self.initConnectionLossMessageBox()
 
     def messageBoxButtonClick(self, value):
-        if (value.text() == "OK"):
-            self.returnToSettingsScreen()
+        print(value)
+        #if (value.text() == "OK"):
+        #    self.returnToSettingsScreen()
+
+    def initConnectionLossMessageBox(self):
+        #self.messageBox = message_boxes.ConnectionLostBox()
+        #self.messageBox.buttonClicked.connect(self.messageBoxButtonClick())
+        #self.messageBox.exec_()
+        print()
+
+    def resizeWidgets(self):
+        width = self.geometry().width()
+        height = self.geometry().height() - self.supportClass.container.statusBar().height()
+        print("NEW WIDTH: " + str(width - self.minWidthWidget * self.widgetAmount))
+        print("WIDTH PLT: " + str(self.plt.geometry()))
+        print("  ")
+        if self.plt is not None:
+            #if (width - self.minWidthWidget * self.widgetAmount) > 1304:
+            #    self.plt.setGeometry(self.minWidthWidget * self.widgetAmount, 0, (width - self.minWidthWidget * self.widgetAmount), height)
+            self.plt.canvas.setGeometry(0, 0, (width - self.minWidthWidget * self.widgetAmount) - self.pltPadding, height)

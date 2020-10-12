@@ -48,6 +48,9 @@ class TransistorMeasureScreenWidget(qt.QWidget):
     def initUI(self):
         layout = qt.QHBoxLayout()
 
+        self.setFixedWidth(5000)
+
+
         self.canvas = pyqtplt.FigureCanvas(fig.Figure())
 
         axes = self.canvas.figure.subplots(2, 2, gridspec_kw={"hspace": 0, "wspace": 0})

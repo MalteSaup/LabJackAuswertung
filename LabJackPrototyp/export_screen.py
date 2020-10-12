@@ -5,7 +5,7 @@ import PyQt5.QtCore as qtcore
 import math
 import pandas as pd
 
-import return_message_box
+import message_boxes
 
 class ExportScreen(qt.QMainWindow):
     def __init__(self, df, fig, columnName=["x0", "y0", "y1", "y2", "y3", "y4", "y5", "y6"]):
@@ -59,11 +59,11 @@ class ExportScreen(qt.QMainWindow):
                         self.df.to_excel(r"" + path, index=False)
                 self.close()
         except PermissionError:
-            self.errorBox = return_message_box.SaveErrorPermissionDeniedBox()
+            self.errorBox = message_boxes.SaveErrorPermissionDeniedBox()
             self.errorBox.exec_()
         except Exception as ex:
             print(ex)
-            self.errorBox = return_message_box.SomethingWentWrong()
+            self.errorBox = message_boxes.SomethingWentWrongBox()
             self.errorBox.exec_()
 
     def dfPacker(self, df):

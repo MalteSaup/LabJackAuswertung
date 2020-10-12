@@ -11,7 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 import export_screen
-import return_message_box
+import message_boxes
 
 from measureScreen import measure_screen_plot_widget as mspw, measure_screen_settings_widget as mssw
 
@@ -50,7 +50,7 @@ class MeasureScreen(qt.QWidget):
         self.mAtoA = 1000
         self.uAtoV = 1e6
 
-        self.minWidthWidget = 190
+        self.minWidthWidget = 220
 
         self.checkboxes = []
 
@@ -80,7 +80,7 @@ class MeasureScreen(qt.QWidget):
             self.settings.addMeasureSeriesButton.clicked.connect(self.addMeasureSerie)
 
         self.settings.setFixedWidth(self.minWidthWidget)
-        qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
+
         self.setLayout(layout)
 
         if self.functionCode == 1:
@@ -97,9 +97,7 @@ class MeasureScreen(qt.QWidget):
         self.measureSeriesCount += 1
         self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
-    def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
-        self.supportClass.resizeWidgets(self.plt)
-        super().resizeEvent(a0)
+
 
     def updateDataset(self, index):
         if self.notStopped:
@@ -212,7 +210,7 @@ class MeasureScreen(qt.QWidget):
             return None, None
 
     def initMessageBox(self):
-        self.messageBox = return_message_box.ReturnMessageBox()
+        self.messageBox = message_boxes.ReturnMessageBox()
         self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
         self.messageBox.exec_()
 

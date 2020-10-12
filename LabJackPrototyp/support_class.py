@@ -27,7 +27,9 @@ class SupportClass:
 
         self.options = options
 
-        self.minWidthWidget = 190
+        self.minWidthWidget = 220
+        self.widgetAmount = 1
+        self.padding = 15
 
 
     def initSC(self):
@@ -106,8 +108,11 @@ class SupportClass:
        settings_screen.SettingsScreen(self, self.measureType, self.container)
 
     def resizeWidgets(self, plt):
-        width = self.container.geometry().width() - self.minWidthWidget
+        width = self.container.geometry().width()
         height = self.container.geometry().height() - self.container.statusBar().height()
+        print(self.minWidthWidget * self.widgetAmount)
+        print((width - self.minWidthWidget * self.widgetAmount) - self.padding)
+        print("  ")
         if plt is not None:
-            plt.canvas.setGeometry(0, 0, width, height)
-
+            plt.setGeometry(self.minWidthWidget * self.widgetAmount, 0, (width - self.minWidthWidget * self.widgetAmount) - self.padding, height)
+            plt.canvas.setGeometry(0, 0, (width - self.minWidthWidget * self.widgetAmount) - self.padding, height)
