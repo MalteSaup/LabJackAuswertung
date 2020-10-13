@@ -2,7 +2,7 @@ import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
-class CalcResultWidget(qt.QWidget):
+class CalcResultWidget(qt.QGroupBox):
     def __init__(self, measureSeries, b, uearly, amount):
         super().__init__()
         if type(uearly) == str:
@@ -23,7 +23,7 @@ class CalcResultWidget(qt.QWidget):
         measureSeriesLabel = qt.QLabel("Measure Serie: " + str(self.measureSeries))
         amountLabel = qt.QLabel("Amount Measurements: " + str(self.amount))
         bLabel = qt.QLabel("B: " + str(self.b))
-        uEarlyLabel = None
+
         if type(self.uearly) == str:
             uEarlyLabel = qt.QLabel("UEarly: " + self.uearly)
         else:
@@ -33,5 +33,10 @@ class CalcResultWidget(qt.QWidget):
         layout.addWidget(amountLabel)
         layout.addWidget(bLabel)
         layout.addWidget(uEarlyLabel)
+
+        sizePolicy = qt.QSizePolicy()
+        sizePolicy.setHorizontalPolicy(qt.QSizePolicy.Minimum)
+
+        self.setSizePolicy(sizePolicy)
 
         self.setLayout(layout)

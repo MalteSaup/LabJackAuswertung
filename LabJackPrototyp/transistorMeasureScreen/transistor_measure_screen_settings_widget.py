@@ -84,6 +84,11 @@ class LabelHolder(qt.QWidget):
         layout.addWidget(processedLabel, 1, 2, 1, 1, qtcore.Qt.AlignRight)
         layout.addWidget(arrowLabel, 1, 1, 1, 1, qtcore.Qt.AlignHCenter)
 
+        sizePolicy = qt.QSizePolicy()
+        sizePolicy.setHorizontalPolicy(qt.QSizePolicy.Minimum)
+
+        groupBox.setSizePolicy(sizePolicy)
+
         groupBox.setLayout(layout)
 
         return groupBox

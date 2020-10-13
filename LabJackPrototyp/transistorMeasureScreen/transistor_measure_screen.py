@@ -121,7 +121,6 @@ class TransistorScreen(qt.QWidget):
         qtcore.QTimer.singleShot(300, lambda: self.resizeWidgets())
 
     def resizeEvent(self, a0: qtgui.QResizeEvent) -> None:
-        print("YES")
         self.resizeWidgets()
         super().resizeEvent(a0)
 
@@ -222,6 +221,8 @@ class TransistorScreen(qt.QWidget):
         self.tcw.setFixedWidth(self.minWidthWidget)
         self.widgetAmount = 2
 
+        self.plt.updateLabel()
+
         self.initTCW()
 
         qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
@@ -249,6 +250,7 @@ class TransistorScreen(qt.QWidget):
 
     def saveClick(self):
         self.notStopped = False
+        self.plt.updateLabel()
         df, fig = self.createExportData()
         if df is None and fig is None:
             pass

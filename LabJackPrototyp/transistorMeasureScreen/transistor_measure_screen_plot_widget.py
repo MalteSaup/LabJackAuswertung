@@ -41,7 +41,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.ubeMinMax = ubeMinMax
         self.ibMax = 250
 
-        self.now = datetime.now().date()
+        self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
 
         self.measureSeriesToDisplay = 0
 
@@ -81,7 +81,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
     def animation(self):
         sameLength, arrUeb = self.checkLength()
-        #print(sameLength)
+
         if sameLength:
             bData = None
             if self.measureSeriesToDisplay != 0 and self.b is not None:
@@ -159,7 +159,8 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[3].invert_yaxis()
         self.axes[3].xaxis.tick_top()
 
-
+    def updateLabel(self):
+        self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
 
     def checkLength(self):
 

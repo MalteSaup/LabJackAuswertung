@@ -1,5 +1,4 @@
 import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
 class Settings(qt.QWidget):
@@ -103,6 +102,11 @@ class Settings(qt.QWidget):
         layout.addWidget(arrowLabel, 2, 1, 1, 1, qtcore.Qt.AlignHCenter)
 
         layout.setHorizontalSpacing(0)
+
+        sizePolicy = qt.QSizePolicy()
+        sizePolicy.setHorizontalPolicy(qt.QSizePolicy.Minimum)
+
+        groupBox.setSizePolicy(sizePolicy)
 
         groupBox.setLayout(layout)
 
