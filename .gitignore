@@ -8,3 +8,5 @@ LabJackPrototyp/Versuchsplot UCE 4Volt.xlsx
 LabJackPrototyp/__pycache__/measure_screen.cpython-38.pyc
 LabJackPrototyp/__pycache__/calculate.cpython-38.pyc
 LabJackPrototyp/.idea/workspace.xml
+LabJackPrototyp/dist
+LabJackPrototyp/build
