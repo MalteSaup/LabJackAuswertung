@@ -16,7 +16,7 @@ else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
 
 class MeasureScreenPlot(qt.QWidget):
-    def __init__(self, ax_x, ax_y, checkboxes, functionCode, resolutionX = 1000):
+    def __init__(self, ax_x, ax_y, checkboxes, functionCode, resolutionX = 10):
         super().__init__()
         self.ax_x = ax_x
         self.ax_y = ax_y
@@ -94,7 +94,7 @@ class MeasureScreenPlot(qt.QWidget):
             drawable, x_ue, y_ue = self.checkXYLength()
 
             self.ax.clear()
-            self.ax.set_ylim([0, 11])
+            self.ax.set_ylim([0, 1]) #TODO NACH MESS CODE RICHTEN
 
             self.ax.set_xlim(self.createXAxisLimits())
 

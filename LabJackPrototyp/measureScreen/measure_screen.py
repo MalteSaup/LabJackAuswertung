@@ -102,29 +102,30 @@ class MeasureScreen(qt.QWidget):
     def updateDataset(self, index):
         if self.notStopped:
             uebergabe = self.supportClass.device.readRegister(0, 26)
+            multiplication = self.mAtoA / self.supportClass.measureSettings.r2
+
             for i in range(4):
                 # TODO Problem Diodenmessung nomma sagen lassen weil wenn wiederstand nicht 1K dann nicht = 1 => nicht alles egal...
-                if self.settings.checkBoxes[i].isChecked():
+                if self.settings.checkBoxes[i].isChecked() and i != index:
                     if i <= 1:
-                        self.ax_y[i].append(abs(uebergabe[i * 2] - uebergabe[i * 2 + 1]))
+                        self.ax_y[i].append(abs(uebergabe[i * 2] - uebergabe[i * 2 + 1]) * multiplication)
                     elif i == 2:
-                        self.ax_y[i].append(abs(uebergabe[4] - uebergabe[6]))
+                        self.ax_y[i].append(abs(uebergabe[4] - uebergabe[6]) * multiplication)
                     elif i == 3:
-                        self.ax_y[i].append(abs(uebergabe[5] - uebergabe[7]))
+                        self.ax_y[i].append(abs(uebergabe[5] - uebergabe[7]) * multiplication)
                 else:
                     self.ax_y[i].append(math.nan)
             if self.functionCode == 0:
                 self.ax_x.append(self.count)
                 self.count += 1
             elif self.functionCode == 1:
-                multiplication = self.mVtoV / self.supportClass.measureSettings.r2
                 self.measureSeries.append(self.measureSeriesCount)
                 if index <= 1:
-                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]) * multiplication)
+                    self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]))
                 elif index == 2:
-                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]) * multiplication)
+                    self.ax_x.append(abs(uebergabe[4] - uebergabe[6]))
                 elif index == 3:
-                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]) * multiplication)
+                    self.ax_x.append(abs(uebergabe[5] - uebergabe[7]))
 
     def startMeasure(self):
         if self.t is None:
