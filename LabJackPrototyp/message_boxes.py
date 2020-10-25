@@ -1,4 +1,5 @@
 import PyQt5.QtWidgets as qt
+import PyQt5.QtGui as qtgui
 
 class ReturnMessageBox(qt.QMessageBox):
     def __init__(self):
@@ -19,7 +20,7 @@ class SaveErrorPermissionDeniedBox(qt.QMessageBox):
     def showUi(self):
         self.setIcon(qt.QMessageBox.Warning)
         self.setText("ERROR WHILE SAVING. You do not have the Permission to save this file. Maybe you have opened it somewhere.")
-        self.setWindowTitle("HAW Labjack")
+        self.setWindowTitle("HAW LabJack")
         self.setStandardButtons(qt.QMessageBox.Ok)
 
 class SomethingWentWrong(qt.QMessageBox):
@@ -30,5 +31,17 @@ class SomethingWentWrong(qt.QMessageBox):
     def showUi(self):
         self.setIcon(qt.QMessageBox.Warning)
         self.setText("Ops Something Went Wrong. Maybe try it again")
-        self.setWindowTitle("HAW Labjack")
+        self.setWindowTitle("HAW LabJack")
+        self.setStandardButtons(qt.QMessageBox.Ok)
+
+class ConnectionLost(qt.QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.t = False
+        self.showUi()
+
+    def showUi(self):
+        self.setIcon(qt.QMessageBox.Warning)
+        self.setText("Your Connection to the LabJack U6 was interrupted. The measurement was stopped. Try Reconnect or Save your Data.")
+        self.setWindowTitle("HAW LabJack")
         self.setStandardButtons(qt.QMessageBox.Ok)

@@ -46,6 +46,7 @@ class SupportClass:
                 print(self.device.getAIN(0))
                 self.device.getCalibrationData()
                 self.checkConnectionThread()
+                self.statusBar.showMessage("Connection State: Connected")
             return True
         except:
             return False

@@ -9,8 +9,9 @@ class Settings(qt.QWidget):
         super().__init__()
 
         self.startMeasureButton = None
-        self.returnButton = None
         self.addMeasureSeriesButton = None
+        self.reconnectButton = None
+        self.returnButton = None
 
         self.measureSeriesLabel = None
 
@@ -37,6 +38,7 @@ class Settings(qt.QWidget):
         self.measureSeriesLabel = qt.QLabel("Measure Series: 1")
         self.startMeasureButton = qt.QPushButton("Start Measurement")
         self.addMeasureSeriesButton = qt.QPushButton("Add Measure Serie")
+        self.reconnectButton = qt.QPushButton("Reconnect")
         self.returnButton = qt.QPushButton("Return")
 
         self.checkBoxes = []
@@ -66,7 +68,10 @@ class Settings(qt.QWidget):
             layout.addWidget(self.startMeasureButton, LabJackU6.USABLEPORTCOUNT.value + 2, 0, 1, 2)
             layout.addWidget(self.addMeasureSeriesButton, LabJackU6.USABLEPORTCOUNT.value + 3, 0, 1, 2)
 
-        layout.addWidget(self.returnButton, LabJackU6.USABLEPORTCOUNT.value + 4, 0, 1, 2)
+        self.reconnectButton.setVisible(False)
+
+        layout.addWidget(self.reconnectButton, LabJackU6.USABLEPORTCOUNT.value + 4, 0, 1, 2)
+        layout.addWidget(self.returnButton, LabJackU6.USABLEPORTCOUNT.value + 5, 0, 1, 2)
 
         self.setLayout(layout)
 
