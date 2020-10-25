@@ -1,19 +1,21 @@
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
+from helper import MeasureMethod
 
 class SettingsScreen(qt.QWidget):
-    def __init__(self, supportClass, measureCode, parent=None):  #MeasureCode: 1 = Diodmeasurescreen, 2 = Transistormeasurescreen
+    def __init__(self, supportClass, parent=None):
         super().__init__(parent)
 
         self.supportClass = supportClass
         self.centralWidget = None
         self.buttonClose = False
-        self.measureCode = measureCode
+        self.measureType = supportClass.measureSettings.measureMethod
 
         self.initUI()
+
     def initUI(self):
-        self.centralWidget = LayoutCombine(self.supportClass.options, self.measureCode)
+        self.centralWidget = LayoutCombine(self.supportClass.options, self.measureType)
         self.initInputsAndComboBoxes()
 
         self.centralWidget.rightWidget.submitButton.clicked.connect(self.onSubmitClick)
@@ -27,7 +29,7 @@ class SettingsScreen(qt.QWidget):
         inputWidget.inputR1.setText(str(measureSettings.r1))
         inputWidget.inputR2.setText(str(measureSettings.r2))
 
-        if self.measureCode == 2:
+        if self.measureType == MeasureMethod.TRANSISTOR:
             inputWidget.inputUbeMin.setText(str(measureSettings.ubeMin))
             inputWidget.inputUbeMax.setText(str(measureSettings.ubeMax))
             inputWidget.inputUceMin.setText(str(measureSettings.uceMin))
@@ -38,8 +40,11 @@ class SettingsScreen(qt.QWidget):
             comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
             comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
 
-        elif self.measureCode == 1:
-            comboBoxes[0].setCurrentIndex(measureSettings.xAxisPort)
+        elif self.measureType == MeasureMethod.DIODE:
+            inputWidget.inputUdMax.setText(str(measureSettings.udMax))
+            inputWidget.inputIdMax.setText(str(measureSettings.udMax))
+
+            comboBoxes[0].setCurrentIndex(measureSettings.udPort + 1)
 
     def closeEvent(self, closeEvent):
         print(closeEvent)
@@ -50,7 +55,7 @@ class SettingsScreen(qt.QWidget):
         inputWidget = self.centralWidget.rightWidget.inputWidgets
         measureComboBoxes = self.centralWidget.leftWidget.measureComboBoxes.comboBoxes
         measureSetting = self.supportClass.measureSettings
-        if self.measureCode == 2:
+        if self.measureType == MeasureMethod.TRANSISTOR:
             measurePorts = [
                 measureComboBoxes[1].currentIndex() - 1,
                 measureComboBoxes[2].currentIndex() - 1,
@@ -68,12 +73,12 @@ class SettingsScreen(qt.QWidget):
 
             self.supportClass.startTransistorScreen()
 
-        elif self.measureCode == 1:
-            xAxisPort = measureComboBoxes[0]
+        elif self.measureType == MeasureMethod.DIODE:
+            udPort = measureComboBoxes[0]
 
             measureSetting.r1 = int(inputWidget.inputR1.text())
             measureSetting.r2 = int(inputWidget.inputR2.text())
-            measureSetting.xAxisPort = xAxisPort.currentIndex() - 1
+            measureSetting.udPort = udPort.currentIndex() - 1
 
             self.supportClass.startMeasureScreen()
 
@@ -85,11 +90,11 @@ class SettingsScreen(qt.QWidget):
 
 
 class LayoutCombine(qt.QWidget):
-    def __init__(self, options, measureCode):
+    def __init__(self, options, measureType):
         super().__init__()
 
         self.options = options
-        self.measureCode = measureCode
+        self.measureType = measureType
 
         self.leftWidget = None
         self.rightWidget = None
@@ -101,8 +106,8 @@ class LayoutCombine(qt.QWidget):
     def showUI(self):
         layout = qt.QHBoxLayout()
 
-        self.leftWidget = LeftLayoutCombine(self.options, self.measureCode)
-        self.rightWidget = RightLayoutCombine(self.measureCode)
+        self.leftWidget = LeftLayoutCombine(self.options, self.measureType)
+        self.rightWidget = RightLayoutCombine(self.measureType)
         layout.addWidget(self.leftWidget)
         layout.addWidget(self.rightWidget)
 
@@ -111,11 +116,11 @@ class LayoutCombine(qt.QWidget):
         self.show()
 
 class LeftLayoutCombine(qt.QWidget):
-    def __init__(self, options, measureCode):
+    def __init__(self, options, measureType):
         super().__init__()
 
         self.options = options
-        self.measureCode = measureCode
+        self.measureType = measureType
         self.measureComboBoxes = None
         self.returnButton = None
         self.showUI()
@@ -123,9 +128,9 @@ class LeftLayoutCombine(qt.QWidget):
     def showUI(self):
         layout = qt.QVBoxLayout()
 
-        if self.measureCode == 2:
+        if self.measureType == MeasureMethod.TRANSISTOR:
             self.measureComboBoxes = MeasurePortsComboBoxes(self.options)
-        elif self.measureCode == 1:
+        elif self.measureType == MeasureMethod.DIODE:
             self.measureComboBoxes = XAxisComboBox(self.options)
 
         self.returnButton = qt.QPushButton("Return")
@@ -220,19 +225,19 @@ class MeasurePortsComboBoxes(qt.QWidget):
         self.setLayout(layout)
 
 class RightLayoutCombine(qt.QWidget):
-    def __init__(self, measureCode):
+    def __init__(self, measureType):
         super().__init__()
 
-        self.measureCode = measureCode
+        self.measureType = measureType
         self.inputWidgets = None
         self.submitButton = None
         self.showUI()
 
     def showUI(self):
         layout = qt.QVBoxLayout()
-        if self.measureCode == 2:
+        if self.measureType == MeasureMethod.TRANSISTOR:
             self.inputWidgets = TransistorInputWidget()
-        elif self.measureCode == 1:
+        elif self.measureType == MeasureMethod.DIODE:
             self.inputWidgets = DiodeInputWidget()
 
         self.submitButton = qt.QPushButton("Submit")
@@ -250,6 +255,8 @@ class DiodeInputWidget(qt.QWidget):
 
         self.inputR1 = None
         self.inputR2 = None
+        self.inputUdMax = None
+        self.inputIdMax = None
 
         self.showUi()
 
@@ -259,17 +266,30 @@ class DiodeInputWidget(qt.QWidget):
         r1Label = qt.QLabel("R1 (Ω): ")
         r2Label = qt.QLabel("R2 (Ω): ")
 
+        udMaxLabel = qt.QLabel("Zu erwartendes Ud Max [V]: ")
+        idMaxLabel = qt.QLabel("Zu erwartendes Id Max [mA]: ")
+
         self.inputR1 = qt.QLineEdit()
         self.inputR1.setValidator(qtgui.QIntValidator())
 
         self.inputR2 = qt.QLineEdit()
         self.inputR2.setValidator(qtgui.QIntValidator())
 
+        self.inputUdMax = qt.QLineEdit()
+        self.inputUdMax.setValidator(qtgui.QDoubleValidator())
+
+        self.inputIdMax = qt.QLineEdit()
+        self.inputIdMax.setValidator(qtgui.QDoubleValidator())
+
         layout.addWidget(r1Label, 0, 0)
         layout.addWidget(r2Label, 1, 0)
+        layout.addWidget(udMaxLabel, 2, 0)
+        layout.addWidget(idMaxLabel, 3, 0)
 
         layout.addWidget(self.inputR1, 0, 1)
         layout.addWidget(self.inputR2, 1, 1)
+        layout.addWidget(self.inputUdMax, 2, 1)
+        layout.addWidget(self.inputIdMax, 3, 1)
 
         self.setLayout(layout)
 

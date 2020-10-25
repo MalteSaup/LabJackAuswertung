@@ -1,8 +1,11 @@
 import PyQt5.QtWidgets as qt
 import PyQt5.QtCore as qtcore
 
+from helper import MeasureMethod, LabJackU6
+
+
 class Settings(qt.QWidget):
-    def __init__(self, functionCode, xAxisPlot = 0):
+    def __init__(self, measureMethod, udPort=0, minWidthWidget=220, padding=10):
         super().__init__()
 
         self.startMeasureButton = None
@@ -13,8 +16,10 @@ class Settings(qt.QWidget):
 
         self.checkBoxes = []
 
-        self.xAxisPlot = xAxisPlot
-        self.functionCode = functionCode
+        self.udPort = udPort
+        self.measureMethod = measureMethod
+        self.minWidthWidget = minWidthWidget
+        self.padding = padding
 
         self.channelData = []
 
@@ -25,67 +30,48 @@ class Settings(qt.QWidget):
 
         self.initUI()
 
-
-
     def initUI(self):
 
         layout = qt.QGridLayout()
 
-        xAxisPlotLabel = qt.QLabel("X-Axis: Channel " + str(self.xAxisPlot + 1))
         self.measureSeriesLabel = qt.QLabel("Measure Series: 1")
-
-        channel1Check = qt.QCheckBox("Active")
-        channel2Check = qt.QCheckBox("Active")
-        channel3Check = qt.QCheckBox("Active")
-        channel4Check = qt.QCheckBox("Active")
-
-        self.checkBoxes.append(channel1Check)
-        self.checkBoxes.append(channel2Check)
-        self.checkBoxes.append(channel3Check)
-        self.checkBoxes.append(channel4Check)
-
         self.startMeasureButton = qt.QPushButton("Start Measurement")
         self.addMeasureSeriesButton = qt.QPushButton("Add Measure Serie")
         self.returnButton = qt.QPushButton("Return")
 
-        icValLabelRaw = qt.QLabel("-")
-        icValLabelProcessed = qt.QLabel("-")
-        ibValLabelRaw = qt.QLabel("-")
-        ibValLabelProcessed = qt.QLabel("-")
+        self.checkBoxes = []
 
-        uceValLabelRaw = qt.QLabel("-")
-        uceValLabelProcessed = qt.QLabel("-")
-        ubeValLabelRaw = qt.QLabel("-")
-        ubeValLabelProcessed = qt.QLabel("-")
+        for i in range(LabJackU6.USABLEPORTCOUNT.value):
+            self.checkBoxes.append(qt.QCheckBox("Active"))
+            self.channelData.append([qt.QLabel("-"), qt.QLabel("-")])
 
-        self.channelData.append([icValLabelRaw, icValLabelProcessed])
-        self.channelData.append([uceValLabelRaw, uceValLabelProcessed])
-        self.channelData.append([ubeValLabelRaw, ubeValLabelProcessed])
-        self.channelData.append([ibValLabelRaw, ibValLabelProcessed])
+            if self.measureMethod == MeasureMethod.OSZILATOR:
+                layout.addWidget(self.createGroupBox("Channel " + str(i), "U/[V]", "U/[V]", self.channelData[-1],
+                                                      self.checkBoxes[-1]))
 
+            if self.measureMethod == MeasureMethod.DIODE:
+                if i == self.udPort:
+                    layout.addWidget(self.createGroupBox("Ud", "Ud/[V]", "Ud/[V]", self.channelData[-1],
+                                                          self.checkBoxes[-1]))
+                else:
+                    if self.udPort > i:
+                        layout.addWidget(self.createGroupBox("Id Diode: " + str(i), "Id " + str(i+1) + " * R2/[V]", "Id " + str(i) + "/[mA]",
+                                                              self.channelData[-1], self.checkBoxes[-1]))
+                    else:
+                        layout.addWidget(self.createGroupBox("Id Diode: " + str(i), "Id " + str(i) + " * R2/[V]", "Id " + str(i) + "/[mA]",
+                                                              self.channelData[-1], self.checkBoxes[-1]))
 
-        icGroupBox = self.createGroupBox("Channel 1", "IC", "IC * R2", icValLabelRaw, icValLabelProcessed, channel1Check)
-        uceGroupBox = self.createGroupBox("Channel 1", "UCE", "UCE", uceValLabelRaw, uceValLabelProcessed, channel2Check)
-        ubeGroupBox = self.createGroupBox("Channel 1", "UBE", "UBE", ubeValLabelRaw, ubeValLabelProcessed, channel3Check)
-        ibGroupBox = self.createGroupBox("Channel 1", "IB", "IB * R1", ibValLabelRaw, ibValLabelProcessed, channel4Check)
+        if self.measureMethod == MeasureMethod.DIODE:
+            layout.addWidget(self.measureSeriesLabel, LabJackU6.USABLEPORTCOUNT.value + 1, 0, 1, 2)
+            layout.addWidget(self.startMeasureButton, LabJackU6.USABLEPORTCOUNT.value + 2, 0, 1, 2)
+            layout.addWidget(self.addMeasureSeriesButton, LabJackU6.USABLEPORTCOUNT.value + 3, 0, 1, 2)
 
-        layout.addWidget(icGroupBox, 1, 0, 1, 2)
-        layout.addWidget(uceGroupBox, 2, 0, 1, 2)
-        layout.addWidget(ubeGroupBox, 3, 0, 1, 2)
-        layout.addWidget(ibGroupBox, 4, 0, 1, 2)
-
-
-        layout.addWidget(self.returnButton, 8, 0, 1, 2)
-
-        if self.functionCode == 1:
-            layout.addWidget(xAxisPlotLabel, 0, 0, 1, 2)
-            layout.addWidget(self.measureSeriesLabel, 5, 0, 1, 2)
-            layout.addWidget(self.startMeasureButton, 6, 0, 1, 2)
-            layout.addWidget(self.addMeasureSeriesButton, 7, 0, 1, 2)
+        layout.addWidget(self.returnButton, LabJackU6.USABLEPORTCOUNT.value + 4, 0, 1, 2)
 
         self.setLayout(layout)
 
-    def createGroupBox(self, groupName, descriptionLeftSide, descriptionRightSide, rawLabel, processedLabel, checkbox=None):
+    def createGroupBox(self, groupName, descriptionLeftSide, descriptionRightSide, dataLabel,
+                       checkbox=None):
         groupBox = qt.QGroupBox(groupName)
         arrowLabel = qt.QLabel("=>")
         descriptionLeftSideLabel = qt.QLabel(descriptionLeftSide)
@@ -97,8 +83,8 @@ class Settings(qt.QWidget):
 
         layout.addWidget(descriptionLeftSideLabel, 1, 0, 1, 1, qtcore.Qt.AlignLeft)
         layout.addWidget(descriptionRightSideLabel, 1, 2, 1, 1, qtcore.Qt.AlignRight)
-        layout.addWidget(rawLabel, 2, 0, 1, 1, qtcore.Qt.AlignLeft)
-        layout.addWidget(processedLabel, 2, 2, 1, 1, qtcore.Qt.AlignRight)
+        layout.addWidget(dataLabel[0], 2, 0, 1, 1, qtcore.Qt.AlignLeft)
+        layout.addWidget(dataLabel[1], 2, 2, 1, 1, qtcore.Qt.AlignRight)
         layout.addWidget(arrowLabel, 2, 1, 1, 1, qtcore.Qt.AlignHCenter)
 
         layout.setHorizontalSpacing(0)
@@ -109,5 +95,7 @@ class Settings(qt.QWidget):
         groupBox.setSizePolicy(sizePolicy)
 
         groupBox.setLayout(layout)
+
+        groupBox.setMinimumWidth(self.minWidthWidget - self.padding)
 
         return groupBox

@@ -23,20 +23,13 @@ class ButtonHolder(qt.QVBoxLayout):
         self.label = label
         self.supportClass = supportClass
         self.options = [
-            "Oszi",
-            "Normal Messen",
-            "Show Transistor",
-            "Experiment 4"
+            "Voltage Measurement",
+            "Diode Measurement",
+            "Transitor Measurement"
         ]
         self.initUI()
 
     def initUI(self):
-        self.options = [
-            "Oszi",
-            "Normal Messen",
-            "Show Transistor"
-        ]
-
         # DropDown
         self.comboBox = qt.QComboBox()
         for option in self.options:
@@ -57,7 +50,6 @@ class ButtonHolder(qt.QVBoxLayout):
 
         connectButton.pressed.connect(self.connectDevice)
         self.startMeasureButton.clicked.connect(self.supportClass.startMeasure)
-        self.supportClass.startMeasureButton = self.startMeasureButton
         exitButton.clicked.connect(qtcore.QCoreApplication.instance().quit)
 
 

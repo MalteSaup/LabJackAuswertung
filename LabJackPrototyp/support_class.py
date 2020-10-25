@@ -5,8 +5,10 @@ import time
 from measureScreen import measure_screen
 import main_screen
 from transistorMeasureScreen import transistor_measure_screen
+from helper import MeasureMethod
 import settings_screen
 import measure_settings
+
 
 class SupportClass:
     def __init__(self, statusBar, container, options, screenGeometry):
@@ -19,8 +21,6 @@ class SupportClass:
         self.container = container
         self.measureSettings = measure_settings.MeasureSettings()
         self.screenGeometry = screenGeometry
-
-        self.measureType = 0
 
         self.inMeasureScreen = False
 
@@ -69,15 +69,17 @@ class SupportClass:
 
 
     def startMeasure(self):
-        self.measureType = self.currentScreen.layout.leftLayout.comboBox.currentIndex()
-        if self.measureType == 0:
+        print("Start Measure " + str(self.currentScreen.layout.leftLayout.comboBox.currentIndex()))
+        print(MeasureMethod(self.currentScreen.layout.leftLayout.comboBox.currentIndex()))
+        self.measureSettings.measureMethod = MeasureMethod(self.currentScreen.layout.leftLayout.comboBox.currentIndex())
+        if self.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
             self.inMeasureScreen = True
-            ms = measure_screen.MeasureScreen(self, self.measureType)
+            ms = measure_screen.MeasureScreen(self)
             self.container.replaceCentralWidget(ms)
             ms.initUI()
             self.currentScreen = ms
         else:
-            settings_screen.SettingsScreen(self, self.measureType, self.container)
+            settings_screen.SettingsScreen(self, self.container)
 
 
     def startTransistorScreen(self):
@@ -88,7 +90,7 @@ class SupportClass:
         ms.initUI()
 
     def startMeasureScreen(self):
-        ms = measure_screen.MeasureScreen(self, self.measureType)
+        ms = measure_screen.MeasureScreen(self)
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = True
         self.currentScreen = ms
@@ -106,4 +108,4 @@ class SupportClass:
 
     def returnToSettingsScreen(self):
        self.returnToMainScreen()
-       settings_screen.SettingsScreen(self, self.measureType, self.container)
+       settings_screen.SettingsScreen(self, self.container)

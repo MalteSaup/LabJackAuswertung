@@ -15,7 +15,7 @@ import export_screen
 from transistorMeasureScreen import transistor_measure_screen_plot_widget as tmspw, \
     transistor_measure_screen_settings_widget as tmssw, transistor_measure_screen_calc_result_widget as tmscrw, \
     transistor_measure_scree_calc_widget as tmscw
-import calculate
+import calculator
 import message_boxes
 import calc_result
 
@@ -85,7 +85,7 @@ class TransistorScreen(qt.QWidget):
 
         self.widgetAmount = 1
 
-        self.calculator = calculate.Calculator()
+        self.calculator = calculator.Calculator()
 
         self.calcResults = []
 

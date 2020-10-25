@@ -12,12 +12,13 @@ import matplotlib.pyplot as plt
 
 import export_screen
 import message_boxes
+from helper import MeasureMethod
 
 from measureScreen import measure_screen_plot_widget as mspw, measure_screen_settings_widget as mssw
 
 
 class MeasureScreen(qt.QWidget):
-    def __init__(self, supportClass, functionCode=0):
+    def __init__(self, supportClass):
         super().__init__()
         plt.style.use("dark_background")
         self.ax_x = []
@@ -41,7 +42,7 @@ class MeasureScreen(qt.QWidget):
         self.t = None
 
         self.samplerate = 25
-        self.functionCode = functionCode
+        self.measureMethod = supportClass.measureSettings.measureMethod
         self.count = 0
 
         self.measureSeriesCount = 1
@@ -60,22 +61,23 @@ class MeasureScreen(qt.QWidget):
 
         layout = qt.QHBoxLayout()
 
-        self.settings = mssw.Settings(self.functionCode, self.supportClass.measureSettings.xAxisPort)
+        self.settings = mssw.Settings(self.supportClass.measureSettings.measureMethod,
+                                      self.supportClass.measureSettings.udPort)
 
         self.checkboxes = self.settings.checkBoxes
 
         self.settings.returnButton.clicked.connect(self.initMessageBox)
 
-        self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.settings.checkBoxes, self.functionCode)
+        self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.settings.checkBoxes, self.supportClass)
 
         layout.addWidget(self.settings)
         layout.addWidget(self.plt)
 
         self.samplerate = int(1000 / self.samplerate)
 
-        if self.functionCode == 0:
+        if self.measureMethod == MeasureMethod.OSZILATOR:
             self.measureClock()
-        elif self.functionCode == 1:
+        elif self.measureMethod == MeasureMethod.DIODE:
             self.settings.startMeasureButton.clicked.connect(self.startMeasure)
             self.settings.addMeasureSeriesButton.clicked.connect(self.addMeasureSerie)
 
@@ -83,26 +85,28 @@ class MeasureScreen(qt.QWidget):
 
         self.setLayout(layout)
 
-        if self.functionCode == 1:
-            self.checkboxes[self.supportClass.measureSettings.xAxisPort].setEnabled(False)
-            self.checkboxes[self.supportClass.measureSettings.xAxisPort].setChecked(True)
+        if self.measureMethod == MeasureMethod.DIODE:
+            self.checkboxes[self.supportClass.measureSettings.udPort].setEnabled(False)
+            self.checkboxes[self.supportClass.measureSettings.udPort].setChecked(True)
 
     def messageBoxButtonClick(self):
-        if self.functionCode == 0:
+        if self.measureMethod == MeasureMethod.OSZILATOR:
             self.returnToMainScreen()
-        elif self.functionCode == 1:
+        elif self.measureMethod == MeasureMethod.DIODE:
             self.returnToSettingsScreen()
 
     def addMeasureSerie(self):
         self.measureSeriesCount += 1
         self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
-
-
     def updateDataset(self, index):
         if self.notStopped:
             uebergabe = self.supportClass.device.readRegister(0, 26)
-            multiplication = self.mAtoA / self.supportClass.measureSettings.r2
+
+            multiplication = 1
+
+            if self.measureMethod == MeasureMethod.DIODE:
+                multiplication = self.mAtoA / self.supportClass.measureSettings.r2
 
             for i in range(4):
                 # TODO Problem Diodenmessung nomma sagen lassen weil wenn wiederstand nicht 1K dann nicht = 1 => nicht alles egal...
@@ -115,10 +119,10 @@ class MeasureScreen(qt.QWidget):
                         self.ax_y[i].append(abs(uebergabe[5] - uebergabe[7]) * multiplication)
                 else:
                     self.ax_y[i].append(math.nan)
-            if self.functionCode == 0:
+            if self.measureMethod == MeasureMethod.OSZILATOR:
                 self.ax_x.append(self.count)
                 self.count += 1
-            elif self.functionCode == 1:
+            elif self.measureMethod == MeasureMethod.DIODE:
                 self.measureSeries.append(self.measureSeriesCount)
                 if index <= 1:
                     self.ax_x.append(abs(uebergabe[index * 2] - uebergabe[index * 2 + 1]))
@@ -129,10 +133,10 @@ class MeasureScreen(qt.QWidget):
 
     def startMeasure(self):
         if self.t is None:
-            if self.functionCode == 1:
+            if self.measureMethod == MeasureMethod.DIODE:
                 self.settings.startMeasureButton.setText("Stop Measurement")
                 self.notStopped = True
-            self.t = threading.Thread(target=self.measureClock(self.supportClass.measureSettings.xAxisPort))
+            self.t = threading.Thread(target=self.measureClock(self.supportClass.measureSettings.udPort))
             self.t.start()
         else:
             if self.notStopped:
@@ -188,12 +192,12 @@ class MeasureScreen(qt.QWidget):
 
             columnNames = []
 
-            if self.functionCode == 1:
+            if self.measureMethod == MeasureMethod.DIODE:
                 measureSeriesDate = list(self.measureSeries)
                 dataFrame.insert(0, "Measure Serie", measureSeriesDate, True)
-                dataFrame.insert(1, "XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort), x_ueb, True)
+                dataFrame.insert(1, "XAxis Channel " + str(self.supportClass.measureSettings.udPort), x_ueb, True)
                 columnNames.append("Measure Serie")
-                columnNames.append("XAxis Channel " + str(self.supportClass.measureSettings.xAxisPort))
+                columnNames.append("XAxis Channel " + str(self.supportClass.measureSettings.udPort))
             else:
                 dataFrame.insert(0, "Ticks Passed", x_ueb, True)
                 columnNames.append("Ticks Passed")
@@ -221,16 +225,17 @@ class MeasureScreen(qt.QWidget):
         self.timerLabel.start(250)
 
     def updateDataLabel(self):
-        if self.functionCode == 1:
-            self.settings.channelData[self.supportClass.measureSettings.xAxisPort][0].setText(
+        if self.measureMethod == MeasureMethod.DIODE:
+            self.settings.channelData[self.supportClass.measureSettings.udPort][0].setText(
                 "{:.3f}".format(self.ax_x[-1] / self.mVtoV * self.supportClass.measureSettings.r2) + "V")
-            self.settings.channelData[self.supportClass.measureSettings.xAxisPort][1].setText(
+            self.settings.channelData[self.supportClass.measureSettings.udPort][1].setText(
                 "{:.3f}".format(self.ax_x[-1]) + "mA")
 
         for i in range(4):
-            if self.checkboxes[i].isChecked() and (i != self.supportClass.measureSettings.xAxisPort or self.functionCode != 1):
+            if self.checkboxes[i].isChecked() and (
+                    i != self.supportClass.measureSettings.udPort or self.measureMethod != MeasureMethod.DIODE):
                 self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
                 self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
-            elif i != self.supportClass.measureSettings.xAxisPort:
+            elif i != self.supportClass.measureSettings.udPort:
                 self.settings.channelData[i][0].setText("-")
                 self.settings.channelData[i][1].setText("-")
