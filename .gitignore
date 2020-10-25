@@ -6,8 +6,11 @@ Bachelor/normal_measure_screen.py
 LabJackPrototyp/Versuchsplot UCE 4Volt.pdf
 LabJackPrototyp/Versuchsplot UCE 4Volt.xlsx
 LabJackPrototyp/__pycache__
-LabJackPrototyp/__pycache__/measure_screen.cpython-38.pyc
-LabJackPrototyp/__pycache__/calculate.cpython-38.pyc
+LabJackPrototyp/measureScreen/__pycache__/measure_screen
+LabJackPrototyp/calculate/__pycache__
+LabJackPrototyp/transistorMeasureScreen/__pycache__
+LabJackPrototyp/mainDirectory
+
 LabJackPrototyp/.idea/workspace.xml
 LabJackPrototyp/dist
 LabJackPrototyp/build
