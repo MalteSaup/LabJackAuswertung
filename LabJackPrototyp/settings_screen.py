@@ -74,11 +74,10 @@ class SettingsScreen(qt.QWidget):
             self.supportClass.startTransistorScreen()
 
         elif self.measureType == MeasureMethod.DIODE:
-            udPort = measureComboBoxes[0]
 
             measureSetting.r1 = int(inputWidget.inputR1.text())
             measureSetting.r2 = int(inputWidget.inputR2.text())
-            measureSetting.udPort = udPort.currentIndex() - 1
+            measureSetting.udPort = measureComboBoxes[0].currentIndex() - 1
 
             self.supportClass.startMeasureScreen()
 

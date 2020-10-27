@@ -105,7 +105,6 @@ class MeasureScreen(qt.QWidget):
         self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
     def updateDataset(self, index):
-
         if self.notStopped:
             try:
                 data = self.supportClass.device.readRegister(0, 8)
@@ -115,8 +114,12 @@ class MeasureScreen(qt.QWidget):
                 if self.measureMethod == MeasureMethod.DIODE:
                     multiplication = self.mAtoA / self.supportClass.measureSettings.r2
 
+                print(multiplication)
+                print(index)
+
                 for i in range(4):
-                    if self.settings.checkBoxes[i].isChecked() and i != index:
+                    if self.settings.checkBoxes[i].isChecked() and (self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR or i == index):
+                        print(abs(data[i * 2] - data[i * 2 + 1]) * multiplication)
                         if i <= 1:
                             self.ax_y[i].append(abs(data[i * 2] - data[i * 2 + 1]) * multiplication)
                         elif i == 2:
@@ -266,17 +269,24 @@ class MeasureScreen(qt.QWidget):
 
     def updateDataLabel(self):
         if self.measureMethod == MeasureMethod.DIODE:
-            self.settings.channelData[self.supportClass.measureSettings.udPort][0].setText(
-                "{:.3f}".format(self.ax_x[-1] / self.mVtoV * self.supportClass.measureSettings.r2) + "V")
-            self.settings.channelData[self.supportClass.measureSettings.udPort][1].setText(
-                "{:.3f}".format(self.ax_x[-1]) + "mA")
-
-        for i in range(4):
-            if len(self.settings.channelData[i]) > 0:
-                if self.checkboxes[i].isChecked() and (
-                        i != self.supportClass.measureSettings.udPort or self.measureMethod != MeasureMethod.DIODE):
-                    self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
-                    self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
-                elif i != self.supportClass.measureSettings.udPort:
-                    self.settings.channelData[i][0].setText("-")
-                    self.settings.channelData[i][1].setText("-")
+            for i in range(4):
+                if len(self.settings.channelData[i]) > 0:
+                    if self.checkboxes[i].isChecked():
+                        if i == self.supportClass.measureSettings.udPort:
+                            self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_x[-1]) + "V")
+                            self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_x[-1]) + "V")
+                        else:
+                            self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1] * self.supportClass.measureSettings.r2 / self.mVtoV) + "V")
+                            self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "mA")
+                    else:
+                        self.settings.channelData[i][0].setText("-")
+                        self.settings.channelData[i][1].setText("-")
+        else:
+            for i in range(4):
+                if len(self.settings.channelData[i]) > 0:
+                    if self.checkboxes[i].isChecked():
+                        self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+                        self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+                    elif i != self.supportClass.measureSettings.udPort:
+                        self.settings.channelData[i][0].setText("-")
+                        self.settings.channelData[i][1].setText("-")
