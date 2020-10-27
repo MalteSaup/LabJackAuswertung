@@ -1,16 +1,9 @@
-Bachelor/venv/
-Bachelor/unnamed.jpg
-Bachelor/unnamed.csv
-Bachelor/unnamed.pdf
-Bachelor/normal_measure_screen.py
-LabJackPrototyp/Versuchsplot UCE 4Volt.pdf
-LabJackPrototyp/Versuchsplot UCE 4Volt.xlsx
-LabJackPrototyp/__pycache__/**
-LabJackPrototyp/measureScreen/__pycache__/**
-LabJackPrototyp/calculate/__pycache__/**
-LabJackPrototyp/transistorMeasureScreen/__pycache__/**
-LabJackPrototyp/mainDirectory/**
+LabJackPrototyp/__pycache__
+LabJackPrototyp/measureScreen/__pycache__
+LabJackPrototyp/calculate/__pycache__
+LabJackPrototyp/transistorMeasureScreen/__pycache__
+LabJackPrototyp/mainDirectory/
 
 LabJackPrototyp/.idea/workspace.xml
-LabJackPrototyp/dist/**
-LabJackPrototyp/build/**
+LabJackPrototyp/dist
+LabJackPrototyp/build
