@@ -2,7 +2,7 @@ from helper import MeasureMethod
 
 
 class MeasureSettings:
-    def __init__(self, r1=100000, r2=200, ubeMin=0, ubeMax=1.0, uceMin=0, uceMax=12, measurePorts=None, udPort=0,
+    def __init__(self, r1=100000, r2=200, ubeMin=0, ubeMax=1.0, uceMin=0, uceMax=12, measurePorts=None, idPort=0,
                  udMax=1, idMax=10, measureMethod=MeasureMethod.TRANSISTOR):
         if measurePorts is None:
             measurePorts = [1, 3, 2, 0]
@@ -18,7 +18,7 @@ class MeasureSettings:
         self.uceMin = uceMin
         self.uceMax = uceMax
         self.measurePorts = measurePorts
-        self.udPort = udPort
+        self.idPort = idPort
         self.udMax = udMax
         self.idMax = idMax
         self.measureMethod = measureMethod
@@ -26,5 +26,5 @@ class MeasureSettings:
     def toString(self):
         return "R1: " + str(self.r1) + " R2: " + str(self.r2) + " UBE Min: " + str(self.ubeMin) + " UBE Max: " + str(
             self.ubeMax) + " UCE Min: " + str(self.uceMin) + " UCE Max: " + str(self.uceMax) + " Measure Ports: " + str(
-            self.measurePorts + " udPort: " + str(self.udPort)) + " udMax: " + str(self.udMax) + " idMax: " + str(
+            self.measurePorts + " idPort: " + str(self.idPort)) + " udMax: " + str(self.udMax) + " idMax: " + str(
             self.idMax) + " measureMethod: " + str(self.measureMethod)

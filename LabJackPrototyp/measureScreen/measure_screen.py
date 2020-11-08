@@ -12,9 +12,10 @@ import matplotlib.pyplot as plt
 
 import export_screen
 import message_boxes
-from helper import MeasureMethod
+from helper import MeasureMethod, LabJackU6
 
-from measureScreen import measure_screen_plot_widget as mspw, measure_screen_settings_widget as mssw
+from measureScreen import measure_screen_plot_widget as mspw
+from settings_component_creator import SettingsComponentCreator
 
 
 class MeasureScreen(qt.QWidget):
@@ -51,7 +52,9 @@ class MeasureScreen(qt.QWidget):
 
         self.minWidthWidget = 220
 
-        self.checkboxes = []
+        self.checkBoxes = []
+
+        self.settingsComponentCreator = SettingsComponentCreator()
 
     def initUI(self):
         self.supportClass.container.saveAction.triggered.connect(self.saveClick)
@@ -59,38 +62,30 @@ class MeasureScreen(qt.QWidget):
 
         layout = qt.QHBoxLayout()
 
-        self.settings = mssw.Settings(self.supportClass.measureSettings.measureMethod,
-                                      self.supportClass.measureSettings.udPort)
+        settingsWidget = self.settingsComponentCreator.createSettingsWidget(self.measureMethod, idPort=self.supportClass.measureSettings.idPort)
 
-        self.checkboxes = self.settings.checkBoxes
+        self.checkBoxes = self.settingsComponentCreator.checkBoxes
 
-        self.settings.reconnectButton.clicked.connect(self.reconnect)
-        self.settings.returnButton.clicked.connect(self.initMessageBox)
+        self.settingsComponentCreator.reconnectButton.clicked.connect(self.reconnect)
+        self.settingsComponentCreator.returnButton.clicked.connect(self.initMessageBox)
 
-        self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.settings.checkBoxes, self.supportClass)
+        self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.checkBoxes, self.supportClass)
 
-        layout.addWidget(self.settings)
+        layout.addWidget(settingsWidget)
         layout.addWidget(self.plt)
 
         self.samplerate = int(1000 / self.samplerate)
 
-        if self.measureMethod == MeasureMethod.OSZILATOR:
-            self.startMeasure()
-        elif self.measureMethod == MeasureMethod.DIODE:
-            self.settings.startMeasureButton.clicked.connect(self.startMeasure)
-            self.settings.addMeasureSeriesButton.clicked.connect(self.addMeasureSerie)
+        self.settingsComponentCreator.startMeasureButton.clicked.connect(self.startMeasure)
+        self.settingsComponentCreator.addMeasureSeriesButton.clicked.connect(self.addMeasureSerie)
 
-        self.settings.setFixedWidth(self.minWidthWidget)
+        settingsWidget.setFixedWidth(self.minWidthWidget)
 
         self.setLayout(layout)
 
-        if self.measureMethod == MeasureMethod.DIODE:
-            self.checkboxes[self.supportClass.measureSettings.udPort].setEnabled(False)
-            self.checkboxes[self.supportClass.measureSettings.udPort].setChecked(True)
-
     def reconnect(self):
         if self.supportClass.connectDevice():
-            self.settings.reconnectButton.setVisible(False)
+            self.settingsComponentCreator.reconnectButton.setVisible(False)
             if self.measureMethod == MeasureMethod.OSZILATOR:
                 self.startMeasure()
 
@@ -102,43 +97,34 @@ class MeasureScreen(qt.QWidget):
 
     def addMeasureSerie(self):
         self.measureSeriesCount += 1
-        self.settings.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
+        self.settingsComponentCreator.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
-    def updateDataset(self, index):
+    def updateDataset(self):
         if self.notStopped:
             try:
-                data = self.supportClass.device.readRegister(0, 8)
-
-                multiplication = 1
+                data = self.supportClass.device.readRegister(0, LabJackU6.MINCHANNELREAD.value)
 
                 if self.measureMethod == MeasureMethod.DIODE:
                     multiplication = self.mAtoA / self.supportClass.measureSettings.r2
-
-                print(multiplication)
-                print(index)
-
-                for i in range(4):
-                    if self.settings.checkBoxes[i].isChecked() and (self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR or i == index):
-                        print(abs(data[i * 2] - data[i * 2 + 1]) * multiplication)
-                        if i <= 1:
-                            self.ax_y[i].append(abs(data[i * 2] - data[i * 2 + 1]) * multiplication)
-                        elif i == 2:
-                            self.ax_y[i].append(abs(data[4] - data[6]) * multiplication)
-                        elif i == 3:
-                            self.ax_y[i].append(abs(data[5] - data[7]) * multiplication)
-                    else:
-                        self.ax_y[i].append(math.nan)
-                if self.measureMethod == MeasureMethod.OSZILATOR:
+                    udPort = 1 - self.supportClass.measureSettings.idPort
+                    self.ax_x.append(abs(data[udPort * 2] - data[udPort * 2 + 1]))
+                    self.ax_y[0].append(abs(data[self.supportClass.measureSettings.idPort * 2] - data[
+                        self.supportClass.measureSettings.idPort * 2 + 1]) * multiplication)
+                else:
+                    for i in range(4):
+                        if self.checkBoxes[i].isChecked():
+                            if i <= 1:
+                                self.ax_y[i].append(abs(data[i * 2] - data[i * 2 + 1]))
+                            elif i == 2:
+                                self.ax_y[i].append(abs(data[4] - data[6]))
+                            elif i == 3:
+                                self.ax_y[i].append(abs(data[5] - data[7]))
+                        else:
+                            self.ax_y[i].append(math.nan)
                     self.ax_x.append(self.count)
                     self.count += 1
-                elif self.measureMethod == MeasureMethod.DIODE:
-                    self.measureSeries.append(self.measureSeriesCount)
-                    if index <= 1:
-                        self.ax_x.append(abs(data[index * 2] - data[index * 2 + 1]))
-                    elif index == 2:
-                        self.ax_x.append(abs(data[4] - data[6]))
-                    elif index == 3:
-                        self.ax_x.append(abs(data[5] - data[7]))
+                self.measureSeries.append(self.measureSeriesCount)
+
             except:
                 if self.notStopped:
                     self.startMeasure()
@@ -150,7 +136,7 @@ class MeasureScreen(qt.QWidget):
                     self.supportClass.runningFlag = False
                     self.connectionLostBox = message_boxes.ConnectionLost()
                     self.connectionLostBox.exec_()
-                    self.settings.reconnectButton.setVisible(True)
+                    self.settingsComponentCreator.reconnectButton.setVisible(True)
 
     def killThread(self):
         print(str(self.t) + " 1 ")
@@ -169,23 +155,21 @@ class MeasureScreen(qt.QWidget):
         if self.t is None:
             self.notStopped = True
             self.connectionLostBox = None
-            if self.measureMethod == MeasureMethod.DIODE:
-                self.settings.startMeasureButton.setText("Stop Measurement")
-                self.t = threading.Thread(target=self.measureClock(self.supportClass.measureSettings.udPort))
-            if self.measureMethod == MeasureMethod.OSZILATOR:
-                self.t = threading.Thread(target=self.measureClock())
+            self.t = threading.Thread(target=self.measureClock())
             self.t.start()
+            self.settingsComponentCreator.startMeasureButton.setText("Stop Measurement")
+
         else:
             if self.notStopped:
                 self.notStopped = False
-                self.settings.startMeasureButton.setText("Start Measurement")
+                self.settingsComponentCreator.startMeasureButton.setText("Start Measurement")
             else:
                 self.notStopped = True
-                self.settings.startMeasureButton.setText("Stop Measurement")
+                self.settingsComponentCreator.startMeasureButton.setText("Stop Measurement")
 
-    def measureClock(self, index=-1):
+    def measureClock(self):
         self.timer = qtcore.QTimer(self)
-        self.timer.timeout.connect(lambda: self.updateDataset(index))
+        self.timer.timeout.connect(lambda: self.updateDataset())
         self.timer.start(self.samplerate)
         self.startUpdateLabel()
 
@@ -232,19 +216,16 @@ class MeasureScreen(qt.QWidget):
             if self.measureMethod == MeasureMethod.DIODE:
                 measureSeriesData = list(self.measureSeries)
                 dataFrame.insert(0, "Measure Serie", measureSeriesData, True)
-                dataFrame.insert(1, "Ud/[V]", xData, True)
+                dataFrame.insert(1, "Id/[mA]", yData[0], True)
+                dataFrame.insert(2, "Ud/[V]", xData, True)
                 columnNames.append("Measure Serie")
+                columnNames.append("Id/[mA]")
                 columnNames.append("Ud/[V]")
-            else:
+            elif self.measureMethod == MeasureMethod.OSZILATOR:
                 dataFrame.insert(0, "Sample", xData, True)
                 columnNames.append("Sample")
-            count = 1
-            for i in range(len(yData)):
-                if self.settings.checkBoxes[i].isChecked():
-                    if self.measureMethod == MeasureMethod.DIODE:
-                        dataFrame.insert(len(dataFrame.columns), "Id " + str(count) + "/[mA]", yData[i], True)
-                        columnNames.append("Id " + str(count) + "/[mA]")
-                    if self.measureMethod == MeasureMethod.OSZILATOR:
+                for i in range(len(yData)):
+                    if self.checkBoxes[i].isChecked():
                         dataFrame.insert(len(dataFrame.columns), "Channel " + str(i + 1) + "/[V]", yData[i], True)
                         columnNames.append("Channel " + str(i + 1) + "/[V]")
 
@@ -269,24 +250,22 @@ class MeasureScreen(qt.QWidget):
 
     def updateDataLabel(self):
         if self.measureMethod == MeasureMethod.DIODE:
-            for i in range(4):
-                if len(self.settings.channelData[i]) > 0:
-                    if self.checkboxes[i].isChecked():
-                        if i == self.supportClass.measureSettings.udPort:
-                            self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_x[-1]) + "V")
-                            self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_x[-1]) + "V")
-                        else:
-                            self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1] * self.supportClass.measureSettings.r2 / self.mVtoV) + "V")
-                            self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "mA")
-                    else:
-                        self.settings.channelData[i][0].setText("-")
-                        self.settings.channelData[i][1].setText("-")
+            multiplication = self.supportClass.measureSettings.r2 / self.mVtoV
+            if len(self.settingsComponentCreator.channelData[0]) > 0:
+                udPort = 1 - self.supportClass.measureSettings.idPort
+                self.settingsComponentCreator.channelData[self.supportClass.measureSettings.idPort][0].setText(
+                    "{:.3f}".format(self.ax_y[0][-1] * multiplication) + "V")
+                self.settingsComponentCreator.channelData[self.supportClass.measureSettings.idPort][1].setText(
+                    "{:.3f}".format(self.ax_y[0][-1]) + "mA")
+                self.settingsComponentCreator.channelData[udPort][0].setText("{:.3f}".format(self.ax_x[-1]) + "V")
+                self.settingsComponentCreator.channelData[udPort][1].setText("{:.3f}".format(self.ax_x[-1]) + "V")
+
         else:
-            for i in range(4):
-                if len(self.settings.channelData[i]) > 0:
-                    if self.checkboxes[i].isChecked():
-                        self.settings.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
-                        self.settings.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
-                    elif i != self.supportClass.measureSettings.udPort:
-                        self.settings.channelData[i][0].setText("-")
-                        self.settings.channelData[i][1].setText("-")
+            if len(self.settingsComponentCreator.channelData[0]) > 0:
+                for i in range(4):
+                    if self.checkBoxes[i].isChecked():
+                        self.settingsComponentCreator.channelData[i][0].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+                        self.settingsComponentCreator.channelData[i][1].setText("{:.3f}".format(self.ax_y[i][-1]) + "V")
+                    elif i != self.supportClass.measureSettings.idPort:
+                        self.settingsComponentCreator.channelData[i][0].setText("-")
+                        self.settingsComponentCreator.channelData[i][1].setText("-")

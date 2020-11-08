@@ -44,7 +44,7 @@ class SettingsScreen(qt.QWidget):
             inputWidget.inputUdMax.setText(str(measureSettings.udMax))
             inputWidget.inputIdMax.setText(str(measureSettings.udMax))
 
-            comboBoxes[0].setCurrentIndex(measureSettings.udPort + 1)
+            comboBoxes[0].setCurrentIndex(measureSettings.idPort + 1)
 
     def closeEvent(self, closeEvent):
         print(closeEvent)
@@ -77,7 +77,7 @@ class SettingsScreen(qt.QWidget):
 
             measureSetting.r1 = int(inputWidget.inputR1.text())
             measureSetting.r2 = int(inputWidget.inputR2.text())
-            measureSetting.udPort = measureComboBoxes[0].currentIndex() - 1
+            measureSetting.idPort = measureComboBoxes[0].currentIndex() - 1
 
             self.supportClass.startMeasureScreen()
 

@@ -115,8 +115,7 @@ class MeasureScreenPlot(qt.QWidget):
             xMarker, yMarker = self.createLastMeasurePointData(self.xData, self.yData)
 
             for i in range(4):
-                if self.checkboxes[i].isChecked() and (
-                        self.supportClass.measureSettings.udPort != i or self.measureMethod == MeasureMethod.OSZILATOR):
+                if (self.measureMethod == MeasureMethod.DIODE and i != self.supportClass.measureSettings.idPort) or (len(self.checkboxes) > i and self.checkboxes[i].isChecked()):
                     if len(self.xData) == 0:
                         self.ax.plot([], [], color=self.colors[i], linestyle="-", marker="None")
                     else:
@@ -138,11 +137,11 @@ class MeasureScreenPlot(qt.QWidget):
                              transform=self.ax.transAxes)
 
             if self.measureMethod == MeasureMethod.DIODE:
-                self.ax.text(-0.05, 0.5, "Ud/[V]", horizontalalignment='right',
+                self.ax.text(-0.05, 0.5, "Id/[mA]", horizontalalignment='right',
                              verticalalignment='center',
                              rotation='vertical',
                              transform=self.ax.transAxes)
-                self.ax.text(0.5, -0.08, "Id/[mA]", horizontalalignment='center',
+                self.ax.text(0.5, -0.08, "Ud/[V]", horizontalalignment='center',
                              verticalalignment='top',
                              transform=self.ax.transAxes)
 

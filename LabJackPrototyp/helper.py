@@ -9,3 +9,5 @@ class MeasureMethod(Enum):
 class LabJackU6(Enum):
     MAXVOLTAGE = 10
     USABLEPORTCOUNT = 4
+    MINCHANNELREAD = USABLEPORTCOUNT * 2 * 2      #Ports needs two channels to read properly the voltage and this needs to be doubled to be read properly from the LabJack U6
+

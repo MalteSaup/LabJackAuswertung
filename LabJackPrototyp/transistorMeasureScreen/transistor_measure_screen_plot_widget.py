@@ -131,22 +131,25 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[1].spines["top"].set_color("none")
         self.axes[1].spines["right"].set_color("none")
         self.axes[1].set_yticks([0, 10, 20, 30, 40])
-        self.axes[1].set_yticklabels(["", 10, 20, 30, "Ic"])
+        self.axes[1].set_yticklabels(["", 10, 20, 30, 40])
         self.axes[1].set_xlim(0, 12)
         self.axes[1].set_ylim(0, 40)
         self.axes[1].get_xaxis().set_visible(False)
+        self.axes[1].text(0, 1.1, "Ic/[mA]", horizontalalignment='center', verticalalignment='center', transform=self.axes[1].transAxes)
 
         self.axes[2].spines["bottom"].set_color("none")
         self.axes[2].spines["left"].set_color("none")
         self.axes[2].get_yaxis().set_visible(False)
-        self.axes[2].set_xticks([0, 50, 100, 150, 200, 220])
-        self.axes[2].set_xticklabels(["", 50, 100, 150, 200, "Ib"])
+        self.axes[2].set_xticks([0, 50, 100, 150, 200, 200])
+        self.axes[2].set_xticklabels(["", 50, 100, 150, 200])
+        self.axes[2].set_yticks(self.ubeTick)
         self.axes[2].set_xlim(0, 220)
-        self.axes[2].set_ylim(0, 1.0)
+        self.axes[2].set_ylim(self.ubeMinMax[0], self.ubeMinMax[1])
         self.axes[2].invert_xaxis()
         self.axes[2].invert_yaxis()
         self.axes[2].xaxis.tick_top()
-
+        self.axes[2].text(-0.05, 1, "Ib/[μA]", horizontalalignment='right', verticalalignment='center', transform=self.axes[2].transAxes)
+        self.axes[2].text(1, -0.1, "Ube/[V]", horizontalalignment='center', verticalalignment='center', transform=self.axes[2].transAxes)
 
         self.axes[3].spines["right"].set_color("none")
         self.axes[3].spines["bottom"].set_color("none")
@@ -158,6 +161,10 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[3].set_ylim(self.ubeMinMax[0], self.ubeMinMax[1])
         self.axes[3].invert_yaxis()
         self.axes[3].xaxis.tick_top()
+        self.axes[3].yaxis.tick_right()
+        self.axes[3].spines["right"].set_position(["axes", 0])
+        self.axes[3].text(1.25, 1, "Uce/[V]", horizontalalignment='right', verticalalignment='center',
+                          transform=self.axes[3].transAxes)
 
     def updateLabel(self):
         self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
