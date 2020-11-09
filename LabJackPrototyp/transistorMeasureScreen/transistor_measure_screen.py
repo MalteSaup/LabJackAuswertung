@@ -59,7 +59,6 @@ class TransistorScreen(qt.QWidget):
 
         self.ubeMin = self.measureSettings.ubeMin
         self.ubeMax = self.measureSettings.ubeMax
-        self.uceMin = self.measureSettings.uceMin
         self.uceMax = self.measureSettings.uceMax
 
         self.uceTicks = []
@@ -107,8 +106,8 @@ class TransistorScreen(qt.QWidget):
                                                                             measurePorts=self.measurePorts)
         # self.settingWidgets = 2     #Muss geändert werdene wenn tcw ins layout kommt wegen resizing
         self.transistorPlot = tmspw.TransistorMeasureScreenWidget(self.measureData, self.measureSeriesForMeasureData,
-                                                                  [self.uceMin, self.uceMax],
-                                                                  [self.ubeMin, self.ubeMax], self.uceTicks,
+                                                                  self.uceMax,
+                                                                  self.ubeMax, self.uceTicks,
                                                                   self.uceTicksLabel,
                                                                   self.ubeTicks, self.ubeTicksLabel,
                                                                   self.supportClass.screenGeometry)
@@ -136,12 +135,12 @@ class TransistorScreen(qt.QWidget):
         super().resizeEvent(a0)
 
     def createUceUbeTicks(self):
-        uceStep = round((self.uceMax - self.uceMin) / self.uceUbeStepCount, 1)
-        ubeStep = round((self.ubeMax - self.ubeMin) / self.uceUbeStepCount, 1)
+        uceStep = round(self.uceMax / self.uceUbeStepCount, 1)
+        ubeStep = round(self.ubeMax / self.uceUbeStepCount, 1)
 
         for i in range(self.uceUbeStepCount + 1):
-            self.uceTicks.append(round(self.uceMin + uceStep * i, 2))
-            self.ubeTicks.append(round(self.ubeMin + ubeStep * i, 2))
+            self.uceTicks.append(round(uceStep * i, 2))
+            self.ubeTicks.append(round(ubeStep * i, 2))
             if i > 0:
                 self.uceTicksLabel.append(str(round(self.uceTicks[-1], 2)))
                 self.ubeTicksLabel.append(str(round(self.ubeTicks[-1], 2)))

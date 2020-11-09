@@ -80,7 +80,7 @@ class SupportClass:
             ms.initUI()
             self.currentScreen = ms
         else:
-            settings_screen.SettingsScreen(self, self.container)
+            settings_screen.SettingsScreenWindow(self, self.container)
 
 
     def startTransistorScreen(self):
@@ -109,4 +109,4 @@ class SupportClass:
 
     def returnToSettingsScreen(self):
        self.returnToMainScreen()
-       settings_screen.SettingsScreen(self, self.container)
+       settings_screen.SettingsScreenWindow(self, self.container)

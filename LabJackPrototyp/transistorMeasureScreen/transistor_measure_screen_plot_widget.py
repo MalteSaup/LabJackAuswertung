@@ -15,7 +15,7 @@ else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
 
 class TransistorMeasureScreenWidget(qt.QWidget):
-    def __init__(self, measureData, measureSeriesForMeasureData, uceMinMax, ubeMinMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel, screenGeometry):
+    def __init__(self, measureData, measureSeriesForMeasureData, uceMax, ubeMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel, screenGeometry):
         super().__init__()
 
         self.stopped = False
@@ -37,8 +37,8 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.ubeTick = ubeTick
         self.uceTickLabel = uceTickLabel
         self.ubeTickLabel = ubeTickLabel
-        self.uceMinMax = uceMinMax
-        self.ubeMinMax = ubeMinMax
+        self.uceMax = uceMax
+        self.ubeMax = ubeMax
         self.ibMax = 250
 
         self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
@@ -119,7 +119,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
         self.canvas.figure.canvas.draw()
 
-    def initAxes(self, showTimestamp = None):
+    def initAxes(self):
         self.axes[0].spines["top"].set_color("none")
         self.axes[0].spines["left"].set_color("none")
         self.axes[0].set_xlim(0, 200)
@@ -144,7 +144,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[2].set_xticklabels(["", 50, 100, 150, 200])
         self.axes[2].set_yticks(self.ubeTick)
         self.axes[2].set_xlim(0, 220)
-        self.axes[2].set_ylim(self.ubeMinMax[0], self.ubeMinMax[1])
+        self.axes[2].set_ylim(0, self.ubeMax)
         self.axes[2].invert_xaxis()
         self.axes[2].invert_yaxis()
         self.axes[2].xaxis.tick_top()
@@ -157,8 +157,8 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[3].set_xticklabels(self.uceTickLabel)
         self.axes[3].set_yticks(self.ubeTick)
         self.axes[3].set_yticklabels(self.ubeTickLabel)
-        self.axes[3].set_xlim(self.uceMinMax[0], self.uceMinMax[1])
-        self.axes[3].set_ylim(self.ubeMinMax[0], self.ubeMinMax[1])
+        self.axes[3].set_xlim(0, self.uceMax)
+        self.axes[3].set_ylim(0, self.ubeMax)
         self.axes[3].invert_yaxis()
         self.axes[3].xaxis.tick_top()
         self.axes[3].yaxis.tick_right()
