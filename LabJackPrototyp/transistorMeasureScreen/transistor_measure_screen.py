@@ -20,7 +20,7 @@ import message_boxes
 import calc_result
 from settings_component_creator import SettingsComponentCreator
 
-from helper import LabJackU6, MeasureMethod
+from helper import LabJackU6Settings, MeasureMethod
 
 if qtplt.is_pyqt5():
     pass
@@ -42,8 +42,9 @@ class TransistorScreen(qt.QWidget):
         self.transistorPlot = None
         self.settingsComponentCreator = None
         self.transistorCalcResultWidget = None
+        self.messageBox = None
 
-        self.columnNames = ["Measure Serie", "IC", "UCE", "UBE", "IB", "Estimation Results"]
+        self.columnNames = ["Measure Serie", "IC/[mA]", "UCE/[V]", "UBE/[V]", "IB/[μA]", "Estimation Results"]
 
         self.measureSettings = self.supportClass.measureSettings
 
@@ -57,7 +58,6 @@ class TransistorScreen(qt.QWidget):
         self.r1 = self.measureSettings.r1
         self.r2 = self.measureSettings.r2
 
-        self.ubeMin = self.measureSettings.ubeMin
         self.ubeMax = self.measureSettings.ubeMax
         self.uceMax = self.measureSettings.uceMax
 
@@ -71,7 +71,7 @@ class TransistorScreen(qt.QWidget):
         self.mikro = 1e6
 
         self.minWidthWidget = 220
-        self.pltPadding = 20
+        self.pltPadding = 10
 
         self.notStopped = True
 
@@ -90,6 +90,8 @@ class TransistorScreen(qt.QWidget):
         self.calculator = calculator.Calculator()
 
         self.calcResults = []
+
+        self.samplerate = 0
 
         self.settingsComponentCreator = SettingsComponentCreator(minWidthWidget=self.minWidthWidget,
                                                                  padding=self.pltPadding)
@@ -150,18 +152,27 @@ class TransistorScreen(qt.QWidget):
 
     def updateDataset(self):
         if self.notStopped and not self.stopped:
-            self.measureSeriesForMeasureData.append(self.measureSeriesCount)
-            uebergabe = self.supportClass.device.readRegister(0, LabJackU6.MINCHANNELREAD.value)
-            uebergabeData = []
-            uebergabeData.append(abs(uebergabe[0] - uebergabe[1]))
-            uebergabeData.append(abs(uebergabe[2] - uebergabe[3]))
-            uebergabeData.append(abs(uebergabe[4] - uebergabe[6]))
-            uebergabeData.append(abs(uebergabe[5] - uebergabe[7]))
+            try:
+                passedData = self.supportClass.labJackU6.getMeasureData()
+                self.measureData[0].append((abs(passedData[self.measurePorts[0]])) / self.r2 * self.milli)
+                self.measureData[1].append((abs(passedData[self.measurePorts[1]])))
+                self.measureData[2].append((abs(passedData[self.measurePorts[2]])))
+                self.measureData[3].append((abs(passedData[self.measurePorts[3]])) / self.r1 * self.mikro)
 
-            self.measureData[0].append((abs(uebergabeData[self.measurePorts[0]])) / self.r2 * self.milli)
-            self.measureData[1].append((abs(uebergabeData[self.measurePorts[1]])))
-            self.measureData[2].append((abs(uebergabeData[self.measurePorts[2]])))
-            self.measureData[3].append((abs(uebergabeData[self.measurePorts[3]])) / self.r1 * self.mikro)
+                self.measureSeriesForMeasureData.append(self.measureSeriesCount)
+            except:
+                self.supportClass.runningFlag = False
+                if self.notStopped:
+                    self.startMeasure()
+                    self.timer.stop()
+                    self.t.join()
+                    qtcore.QTimer.singleShot(1000, lambda: self.killThread())
+
+                if self.connectionLostBox == None:
+                    self.supportClass.runningFlag = False
+                    self.connectionLostBox = message_boxes.ConnectionLost()
+                    self.connectionLostBox.exec_()
+                    self.settingsComponentCreator.reconnectButton.setVisible(True)
 
     def addMeasureSeries(self):
         if self.notStopped:
@@ -255,15 +266,16 @@ class TransistorScreen(qt.QWidget):
         self.timer.start(self.samplerate)
         self.transistorPlot.timer.start()
 
-    def saveClick(self):
-        self.notStopped = False
-        self.transistorPlot.updateLabel()
-        df, fig = self.createExportData()
+    def saveClick(self, wasStopped=False):
+        if self.notStopped:
+            wasStopped = True
+            self.notStopped = False
+        df, fig, columnNames = self.createExportData()
         if df is None and fig is None:
-            pass
+            self.saveClick(wasStopped)
         else:
-            self.notStopped = True
-            self.exportScreen = export_screen.ExportScreen(df, fig, self.columnNames)
+            self.notStopped = wasStopped
+            self.exportScreen = export_screen.ExportScreen(df, fig, columnNames)
             self.exportScreen.show()
 
     def calcClick(self):
@@ -280,7 +292,6 @@ class TransistorScreen(qt.QWidget):
             self.calcAll()
         else:
             lower = 0
-            upper = 0
             if measureSeries - 1 == 1:
                 try:
                     upper = self.measureSeriesForMeasureData.index(measureSeries)
@@ -292,8 +303,6 @@ class TransistorScreen(qt.QWidget):
                     upper = self.measureSeriesForMeasureData.index(measureSeries)
                 except:
                     upper = -1
-            print("u" + str(upper))
-            print("l" + str(lower))
             uce = self.measureData[1][lower:upper]
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
@@ -301,7 +310,7 @@ class TransistorScreen(qt.QWidget):
         if uce is None or ic is None or ib is None:
             print("ERROR WITH VALUE INIT")
             return
-        uearly, n = self.calculator.leastSquare(uce, ic)
+        uearly = self.calculator.leastSquare(uce, ic)
         b = self.calculator.calcB(ic, ib)
         if uearly is None:
             print("ERROR IN UEALRY CALC")
@@ -332,7 +341,7 @@ class TransistorScreen(qt.QWidget):
             ic = self.measureData[0][lower:upper]
             ib = self.measureData[3][lower:upper]
 
-            uearly, n = self.calculator.leastSquare(uce, ic)
+            uearly = self.calculator.leastSquare(uce, ic)
             b = self.calculator.calcB(ic, ib)
 
             if uearly is None:
@@ -341,19 +350,6 @@ class TransistorScreen(qt.QWidget):
 
             self.addCalcResults(str(i), len(uce), b, uearly)
 
-    def returnToSettingsScreen(self):
-        if self.timer is not None:
-            self.timer.stop()
-
-        if self.timerLabel is not None:
-            self.timerLabel.stop()
-
-        if self.transistorPlot.timer is not None:
-            self.transistorPlot.timer.stop()
-
-        self.stopped = True
-        self.supportClass.returnToSettingsScreen()
-
     def createExportData(self):
         if self.transistorPlot.checkLength()[0]:
             data_ueb = []
@@ -361,13 +357,8 @@ class TransistorScreen(qt.QWidget):
             data_ueb += self.measureData
             fig_ueb = self.transistorPlot.canvas.figure
             dataFrame = pd.DataFrame()
-            print(len(data_ueb))
-            print(len(self.columnNames))
 
             estimationData = self.createMeasureEstimationCol()
-
-            print("EDD")
-            print(estimationData)
 
             if (estimationData is not None):
                 if len(estimationData) > len(data_ueb[0]):
@@ -388,10 +379,6 @@ class TransistorScreen(qt.QWidget):
 
             return dataFrame, fig_ueb
         else:
-            timerCreateExportData = qtcore.QTimer(self)
-            timerCreateExportData.timeout.connect(self.saveClick)
-            timerCreateExportData.setSingleShot(True)
-            timerCreateExportData.start(100)
             return None, None
 
     def createMeasureEstimationCol(self):
@@ -435,21 +422,25 @@ class TransistorScreen(qt.QWidget):
         self.transistorCalcResultWidget.calcButton.pressed.connect(self.calcClick)
 
     def initReturnMessageBox(self):
-        # self.messageBox = message_boxes.ReturnMessageBox()
-        # self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
-        # self.messageBox.exec_()
-        self.initConnectionLossMessageBox()
+        self.messageBox = message_boxes.ReturnMessageBox()
+        result = self.messageBox.exec_()
+        if result == qt.QMessageBox.Ok:
+            if self.timer is not None:
+                self.timer.stop()
 
-    def messageBoxButtonClick(self, value):
-        print(value)
-        # if (value.text() == "OK"):
-        #    self.returnToSettingsScreen()
+            if self.timerLabel is not None:
+                self.timerLabel.stop()
 
-    def initConnectionLossMessageBox(self):
-        # self.messageBox = message_boxes.ConnectionLostBox()
-        # self.messageBox.buttonClicked.connect(self.messageBoxButtonClick())
-        # self.messageBox.exec_()
-        print()
+            if self.transistorPlot.timer is not None:
+                self.transistorPlot.timer.stop()
+
+            self.stopped = True
+            self.supportClass.returnToSettingsScreen()
+        else:
+            pass
+
+    def connectionLostBoxClick(self):
+        self.connectionLostBox.exec()
 
     def resizeWidgets(self):
         width = self.geometry().width()

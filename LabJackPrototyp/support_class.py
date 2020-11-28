@@ -1,13 +1,10 @@
-import u6
-import threading
-import time
-
 from measureScreen import measure_screen
 import main_screen
 from transistorMeasureScreen import transistor_measure_screen
 from helper import MeasureMethod
 import settings_screen
 import measure_settings
+from labjack_u6 import LabJackU6
 
 
 class SupportClass:
@@ -16,11 +13,9 @@ class SupportClass:
         self.device = None
         self.runningFlag = False
         self.statusBar = statusBar
-        self.inMainScreen = False
-        self.startMeasureButton = None
+        self.inMainScreen = True
         self.container = container
         self.measureSettings = measure_settings.MeasureSettings()
-        self.screenGeometry = screenGeometry
 
         self.inMeasureScreen = False
 
@@ -28,66 +23,38 @@ class SupportClass:
 
         self.options = options
 
+        self.screenGeometry = screenGeometry
+
         self.minWidthWidget = 220
         self.widgetAmount = 1
         self.padding = 15
 
-
-    def initSC(self):
-        print()
+        self.labJackU6 = None
 
     def connectDevice(self):
-        try:
-            if self.runningFlag:
-                pass
-            else:
-                self.device = u6.U6()
-                print(self.device)
-                print(self.device.getAIN(0))
-                self.device.getCalibrationData()
-                self.checkConnectionThread()
-                self.statusBar.showMessage("Connection State: Connected")
-            return True
-        except:
-            return False
-
-    def checkConnectionThread(self):
-        self.runningFlag = True
-        self.t = threading.Thread(target=self.check)
-        self.t.start()
-
-    def check(self):
-        while self.runningFlag:
-            time.sleep(1)
-
-            try:
-                self.device.getAIN(0)
-            except:
-                self.runningFlag = False
-                self.statusBar.showMessage("Connection State: Connection Lost")
-                if self.inMainScreen:
-                    self.currentScreen.startMeasureButton.setEnabled = False
-
+        self.labJackU6 = LabJackU6(self)
+        return self.labJackU6.connectDevice()
 
     def startMeasure(self):
-        print("Start Measure " + str(self.currentScreen.layout.leftLayout.comboBox.currentIndex()))
-        print(MeasureMethod(self.currentScreen.layout.leftLayout.comboBox.currentIndex()))
-        self.measureSettings.measureMethod = MeasureMethod(self.currentScreen.layout.leftLayout.comboBox.currentIndex())
+        self.measureSettings.measureMethod = MeasureMethod(self.currentScreen.comboBox.currentIndex())
         if self.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
             self.inMeasureScreen = True
             ms = measure_screen.MeasureScreen(self)
             self.container.replaceCentralWidget(ms)
             ms.initUI()
             self.currentScreen = ms
+            self.labJackU6.runningFlag = False
+            self.inMainScreen = False
         else:
             settings_screen.SettingsScreenWindow(self, self.container)
-
 
     def startTransistorScreen(self):
         ms = transistor_measure_screen.TransistorScreen(self)
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = True
+        self.inMainScreen = False
         self.currentScreen = ms
+        self.labJackU6.runningFlag = False
         ms.initUI()
 
     def startMeasureScreen(self):
@@ -101,6 +68,8 @@ class SupportClass:
         ms = main_screen.MainScreen(self)
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = False
+        self.inMainScreen = True
+        self.labJackU6.checkConnectionThread()
         try:
             ms.initUI()
         except Exception as e:

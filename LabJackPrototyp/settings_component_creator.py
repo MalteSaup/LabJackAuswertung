@@ -2,7 +2,7 @@ import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
 
-from helper import LabJackU6, MeasureMethod
+from helper import LabJackU6Settings, MeasureMethod
 
 
 class SettingsComponentCreator:
@@ -80,7 +80,7 @@ class SettingsComponentCreator:
                                     self.channelData[udPort]))
 
         elif measureMethod == MeasureMethod.OSZILATOR:
-            for i in range(LabJackU6.USABLEPORTCOUNT.value):
+            for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
                 self.channelData.append([qt.QLabel("-"), qt.QLabel("-")])
                 self.checkBoxes.append(qt.QCheckBox("Active"))
                 layout.addWidget(self.createGroupBox("Channel " + str(i), "U/[V]", "U/[V]",
@@ -88,20 +88,20 @@ class SettingsComponentCreator:
                                                      self.checkBoxes[-1]))
 
         elif measureMethod == MeasureMethod.TRANSISTOR:
-            for i in range(LabJackU6.USABLEPORTCOUNT.value):
+            for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
                 self.channelData.append([qt.QLabel("-"), qt.QLabel("-")])
                 groupBox = self.createGroupBox(options[measurePorts[0] + 1], "IC",
                                                "IC * R2", self.channelData[-1])
                 layout.addWidget(groupBox, i, 0, 1, 2)
 
-        layout.addWidget(self.measureSeriesLabel, LabJackU6.USABLEPORTCOUNT.value + 1, 0, 1, 2)
-        layout.addWidget(self.startMeasureButton, LabJackU6.USABLEPORTCOUNT.value + 2, 0, 1, 2)
-        layout.addWidget(self.addMeasureSeriesButton, LabJackU6.USABLEPORTCOUNT.value + 3, 0, 1, 2)
+        layout.addWidget(self.measureSeriesLabel, LabJackU6Settings.USABLEPORTCOUNT.value + 1, 0, 1, 2)
+        layout.addWidget(self.startMeasureButton, LabJackU6Settings.USABLEPORTCOUNT.value + 2, 0, 1, 2)
+        layout.addWidget(self.addMeasureSeriesButton, LabJackU6Settings.USABLEPORTCOUNT.value + 3, 0, 1, 2)
 
         self.reconnectButton.setVisible(False)
 
-        layout.addWidget(self.reconnectButton, LabJackU6.USABLEPORTCOUNT.value + 4, 0, 1, 2)
-        layout.addWidget(self.returnButton, LabJackU6.USABLEPORTCOUNT.value + 5, 0, 1, 2)
+        layout.addWidget(self.reconnectButton, LabJackU6Settings.USABLEPORTCOUNT.value + 4, 0, 1, 2)
+        layout.addWidget(self.returnButton, LabJackU6Settings.USABLEPORTCOUNT.value + 5, 0, 1, 2)
 
         widget.setLayout(layout)
 

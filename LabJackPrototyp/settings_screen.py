@@ -1,7 +1,7 @@
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
-from helper import MeasureMethod, LabJackU6
+from helper import MeasureMethod, LabJackU6Settings
 
 class SettingsScreenWindow(qt.QWidget):
     def __init__(self, supportClass, parent=None):
@@ -26,8 +26,6 @@ class SettingsScreen(qt.QWidget):
         self.comboBoxes = []
         self.transistorLabelText = ["IB", "IC", "UCE", "UBE"]
 
-        self.initUI()
-
         self.inputR1 = None
         self.inputR2 = None
 
@@ -37,6 +35,11 @@ class SettingsScreen(qt.QWidget):
         self.submitButton = None
         self.returnButton = None
 
+        self.error = None
+
+        self.layout = None
+
+        self.initUI()
 
     def initUI(self):
         layoutComboBoxes = qt.QGridLayout()
@@ -63,7 +66,7 @@ class SettingsScreen(qt.QWidget):
         layoutInputFields.addWidget(self.inputVal2Max, 3, 1, 1, 1, qtcore.Qt.AlignRight)
 
         if self.supportClass.measureSettings.measureMethod == MeasureMethod.TRANSISTOR:
-            for i in range(LabJackU6.USABLEPORTCOUNT.value):
+            for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
                 comboBox = qt.QComboBox()
                 comboBox.setMinimumWidth(150)
                 for option in self.supportClass.options:
@@ -76,12 +79,15 @@ class SettingsScreen(qt.QWidget):
             layoutInputFields.addWidget(qt.QLabel("Zu erwartenes Uce Max (V): "), 3, 0, 1, 1, qtcore.Qt.AlignLeft)
 
         elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
-            comboBox = qt.QComboBox()
-            for i in range(3):
-                comboBox.addItem(self.supportClass.options[i])
-            self.comboBoxes.append(comboBox)
+            for j in range(2):
+                self.comboBoxes.append(qt.QComboBox())
+                for i in range(len(self.supportClass.options)):
+                    self.comboBoxes[j].addItem(self.supportClass.options[i])
             layoutComboBoxes.addWidget(qt.QLabel("Id Measure Channel"), 0, 0, 1, 1, qtcore.Qt.AlignLeft)
-            layoutComboBoxes.addWidget(self.comboBoxes[0], 0, 1, 1, qtcore.Qt.AlignLeft)
+            layoutComboBoxes.addWidget(self.comboBoxes[0], 0, 1, 1, 1, qtcore.Qt.AlignLeft)
+
+            layoutComboBoxes.addWidget(qt.QLabel("Ud Measure Channel"), 1, 0, 1, 1, qtcore.Qt.AlignLeft)
+            layoutComboBoxes.addWidget(self.comboBoxes[1], 1, 1, 1, 1, qtcore.Qt.AlignLeft)
 
             layoutInputFields.addWidget(qt.QLabel("Zu erwartendes Ud Max [V]: "), 2, 0, 1, 1, qtcore.Qt.AlignLeft)
             layoutInputFields.addWidget(qt.QLabel("Zu erwartendes Id Max [mA]: "), 3, 0, 1, 1, qtcore.Qt.AlignLeft)
@@ -89,25 +95,25 @@ class SettingsScreen(qt.QWidget):
         self.submitButton = qt.QPushButton("Submit")
         self.returnButton = qt.QPushButton("Return")
 
-        layoutInputFields.addWidget(self.submitButton, LabJackU6.USABLEPORTCOUNT.value + 2, 0, 1, 2, qtcore.Qt.AlignBottom)
-        layoutComboBoxes.addWidget(self.returnButton, LabJackU6.USABLEPORTCOUNT.value + 2, 0, 1, 2, qtcore.Qt.AlignBottom)
+        layoutInputFields.addWidget(self.submitButton, LabJackU6Settings.USABLEPORTCOUNT.value + 2, 0, 1, 2, qtcore.Qt.AlignBottom)
+        layoutComboBoxes.addWidget(self.returnButton, LabJackU6Settings.USABLEPORTCOUNT.value + 2, 0, 1, 2, qtcore.Qt.AlignBottom)
 
         self.initInputsAndComboBoxes()
-
-        self.submitButton.clicked.connect(self.onSubmitClick)
-        self.returnButton.clicked.connect(self.close)
 
         layout = qt.QHBoxLayout()
         layout.addLayout(layoutComboBoxes)
         layout.addLayout(layoutInputFields)
 
-        self.setLayout(layout)
+        self.layout = qt.QVBoxLayout()
+        self.layout.addLayout(layout)
+
+        self.setLayout(self.layout)
 
         self.setWindowModality(qtcore.Qt.ApplicationModal)
 
+        self.submitButton.clicked.connect(self.onSubmitClick)
+        self.returnButton.clicked.connect(self.close)
         self.show()
-
-        print(self.submitButton.geometry().width())
 
     def initInputsAndComboBoxes(self):
         measureSettings = self.supportClass.measureSettings
@@ -115,7 +121,11 @@ class SettingsScreen(qt.QWidget):
         if self.measureMethod == MeasureMethod.DIODE:
             self.inputVal1Max.setText(str(measureSettings.udMax))
             self.inputVal2Max.setText(str(measureSettings.idMax))
-            print(measureSettings.toString())
+
+            self.comboBoxes[0].setCurrentIndex(measureSettings.idPort + 1)
+            self.comboBoxes[1].setCurrentIndex(measureSettings.udPort + 1)
+
+            #the following code exists cause of the laziness of programmer for always change the measureSettings so it fits the diode measurement
             if measureSettings.r1 == 100000:
                 self.inputR1.setText(str(10000))
             else:
@@ -125,28 +135,64 @@ class SettingsScreen(qt.QWidget):
             else:
                 self.inputR2.setText(str(measureSettings.r2))
 
+
         if self.supportClass.measureSettings.measureMethod == MeasureMethod.TRANSISTOR:
             self.inputVal1Max.setText(str(measureSettings.ubeMax))
             self.inputVal2Max.setText(str(measureSettings.uceMax))
             self.inputR1.setText(str(measureSettings.r1))
             self.inputR2.setText(str(measureSettings.r2))
-
-
-        if self.supportClass.measureSettings.measureMethod == MeasureMethod.TRANSISTOR:
-
             self.comboBoxes[0].setCurrentIndex(measureSettings.measurePorts[3]+1)
             self.comboBoxes[1].setCurrentIndex(measureSettings.measurePorts[0]+1)
             self.comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
             self.comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
 
-        elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
-            self.comboBoxes[0].setCurrentIndex(measureSettings.idPort + 1)
-
     def closeEvent(self, closeEvent):
-        print(closeEvent)
         closeEvent.accept()
 
+    def validateInputs(self):
+        if self.layout.count() > 1:
+            self.layout.itemAt(1).widget().setParent(None)
+
+        choosenMeasurePorts = []
+
+        for comboBox in self.comboBoxes:
+            currentIndex = comboBox.currentIndex()
+            if currentIndex == 0:
+                label = qt.QLabel()
+                label.setText("Measure Port should not be None")
+                label.setStyleSheet("color: red")
+                self.layout.addWidget(label)
+                return False
+            try:
+                choosenMeasurePorts.index(currentIndex)
+                label = qt.QLabel()
+                label.setText("One measure Channel should only be used for one Measure Value")
+                label.setStyleSheet("color: red")
+                self.layout.addWidget(label)
+                return False
+            except:
+                choosenMeasurePorts.append(comboBox.currentIndex())
+
+        try:
+            if int(self.inputR1.text()) == 0 or int(self.inputR2.text()) == 0 or float(self.inputVal1Max.text()) == 0 or float(self.inputVal2Max.text()) == 0:
+                label = qt.QLabel()
+                label.setText("An Input Field is not allowed to be 0")
+                label.setStyleSheet("color: red")
+                self.layout.addWidget(label)
+                return False
+        except:
+            label = qt.QLabel()
+            label.setText("An Input Field must contain a valid Value")
+            label.setStyleSheet("color: red")
+            self.layout.addWidget(label)
+            return False
+
+        return True
+
     def onSubmitClick(self):
+
+        if not self.validateInputs():
+            return
 
         self.supportClass.measureSettings.r1 = int(self.inputR1.text())
         self.supportClass.measureSettings.r2 = int(self.inputR2.text())
@@ -169,6 +215,7 @@ class SettingsScreen(qt.QWidget):
             self.supportClass.measureSettings.udMax = int(self.inputVal1Max.text())
             self.supportClass.measureSettings.idMax = int(self.inputVal2Max.text())
             self.supportClass.measureSettings.idPort = self.comboBoxes[0].currentIndex() - 1
+            self.supportClass.measureSettings.udPort = self.comboBoxes[1].currentIndex() - 1
 
             self.supportClass.startMeasureScreen()
 

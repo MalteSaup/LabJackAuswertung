@@ -9,7 +9,7 @@ import copy
 import matplotlib.backends.qt_compat as qtplt
 import matplotlib.figure as fig
 
-from helper import MeasureMethod, LabJackU6
+from helper import MeasureMethod, LabJackU6Settings
 
 if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt
@@ -64,10 +64,13 @@ class MeasureScreenPlot(qt.QWidget):
 
         emptyArr = [math.nan] * len(yData[0])
 
-        for i in range(len(yData)):
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
+            for i in range(len(yData)):
+                yMeasurePoints.append(emptyArr.copy())
+                yMeasurePoints[i][-1] = yData[i][-1]
+        elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
             yMeasurePoints.append(emptyArr.copy())
-            yMeasurePoints[i][-1] = yData[i][-1]
-
+            yMeasurePoints[0][-1] = yData[0][-1]
         return xMeasurePoint, yMeasurePoints
 
     def createXAxisLimits(self):
@@ -82,7 +85,7 @@ class MeasureScreenPlot(qt.QWidget):
 
     def createYAxisLimits(self):
         if (self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR):
-            return [0, LabJackU6.MAXVOLTAGE.value]
+            return [0, LabJackU6Settings.MAXVOLTAGE.value]
         if (self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE):
             return [0, self.supportClass.measureSettings.idMax]
 
@@ -94,8 +97,12 @@ class MeasureScreenPlot(qt.QWidget):
 
         sameLength = True
 
-        for i in range(4):
-            if not lengthX == len(yData[i]):
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
+            for i in range(4):
+                if not lengthX == len(yData[i]):
+                    sameLength = False
+        elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+            if not lengthX == len(yData[0]):
                 sameLength = False
         return sameLength, xData, yData
 
@@ -112,22 +119,16 @@ class MeasureScreenPlot(qt.QWidget):
                 self.xData = list(xData)
                 self.yData = copy.deepcopy(yData)
 
-            xMarker, yMarker = self.createLastMeasurePointData(self.xData, self.yData)
 
-            for i in range(4):
-                if (self.measureMethod == MeasureMethod.DIODE and i != self.supportClass.measureSettings.idPort) or (len(self.checkboxes) > i and self.checkboxes[i].isChecked()):
-                    if len(self.xData) == 0:
-                        self.ax.plot([], [], color=self.colors[i], linestyle="-", marker="None")
-                    else:
-                        if self.measureMethod == MeasureMethod.OSZILATOR:
-                            self.ax.plot(self.xData, self.yData[i], color=self.colors[i], linestyle="-", marker="None")
-                        elif self.measureMethod == MeasureMethod.DIODE:
-                            self.ax.plot(self.xData, self.yData[i], color=self.colors[i], linestyle="None", marker=".",
-                                         markersize=1.5)
-                            self.ax.plot(xMarker, yMarker[i], color=self.colors[i], linestyle="None", marker="X",
-                                         markersize=4)
 
             if self.measureMethod == MeasureMethod.OSZILATOR:
+                for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
+                    if self.checkboxes[i].isChecked():
+                        if len(self.xData) == 0:
+                            self.ax.plot([], [], color=self.colors[i], linestyle="-", marker="None")
+                        else:
+                            self.ax.plot(self.xData, self.yData[i], color=self.colors[i], linestyle="-", marker="None")
+
                 self.ax.text(-0.05, 0.5, "Voltage/[V]", horizontalalignment='right',
                              verticalalignment='center',
                              rotation='vertical',
@@ -137,6 +138,13 @@ class MeasureScreenPlot(qt.QWidget):
                              transform=self.ax.transAxes)
 
             if self.measureMethod == MeasureMethod.DIODE:
+                xMarker, yMarker = self.createLastMeasurePointData(self.xData, self.yData)
+
+                if len(self.xData) == 0:
+                    self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".")
+                else:
+                    self.ax.plot(self.xData, self.yData[0], color=self.colors[3], linestyle="None", marker=".", markersize=1.5)
+                self.ax.plot(xMarker, yMarker[0], color=self.colors[3], linestyle="None", marker="X", markersize=4)
                 self.ax.text(-0.05, 0.5, "Id/[mA]", horizontalalignment='right',
                              verticalalignment='center',
                              rotation='vertical',

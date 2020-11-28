@@ -2,8 +2,8 @@ import math
 import threading
 
 import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
+import PyQt5.QtGui as qtgui
 
 import copy
 import pandas as pd
@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 import export_screen
 import message_boxes
-from helper import MeasureMethod, LabJackU6
+from helper import MeasureMethod, LabJackU6Settings
 
 from measureScreen import measure_screen_plot_widget as mspw
 from settings_component_creator import SettingsComponentCreator
@@ -67,7 +67,7 @@ class MeasureScreen(qt.QWidget):
         self.checkBoxes = self.settingsComponentCreator.checkBoxes
 
         self.settingsComponentCreator.reconnectButton.clicked.connect(self.reconnect)
-        self.settingsComponentCreator.returnButton.clicked.connect(self.initMessageBox)
+        self.settingsComponentCreator.returnButton.clicked.connect(self.initReturnMessageBox)
 
         self.plt = mspw.MeasureScreenPlot(self.ax_x, self.ax_y, self.checkBoxes, self.supportClass)
 
@@ -89,43 +89,33 @@ class MeasureScreen(qt.QWidget):
             if self.measureMethod == MeasureMethod.OSZILATOR:
                 self.startMeasure()
 
-    def messageBoxButtonClick(self):
-        if self.measureMethod == MeasureMethod.OSZILATOR:
-            self.returnToMainScreen()
-        elif self.measureMethod == MeasureMethod.DIODE:
-            self.returnToSettingsScreen()
-
     def addMeasureSerie(self):
         self.measureSeriesCount += 1
         self.settingsComponentCreator.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
 
     def updateDataset(self):
+        print("H"+ str(self.measureMethod))
         if self.notStopped:
             try:
-                data = self.supportClass.device.readRegister(0, LabJackU6.MINCHANNELREAD.value)
+                measureData = self.supportClass.labJackU6.getMeasureData()
 
                 if self.measureMethod == MeasureMethod.DIODE:
                     multiplication = self.mAtoA / self.supportClass.measureSettings.r2
-                    udPort = 1 - self.supportClass.measureSettings.idPort
-                    self.ax_x.append(abs(data[udPort * 2] - data[udPort * 2 + 1]))
-                    self.ax_y[0].append(abs(data[self.supportClass.measureSettings.idPort * 2] - data[
-                        self.supportClass.measureSettings.idPort * 2 + 1]) * multiplication)
+                    self.ax_x.append(measureData[self.supportClass.measureSettings.udPort])
+                    self.ax_y[0].append(measureData[self.supportClass.measureSettings.idPort] * multiplication)
                 else:
-                    for i in range(4):
+                    for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
                         if self.checkBoxes[i].isChecked():
-                            if i <= 1:
-                                self.ax_y[i].append(abs(data[i * 2] - data[i * 2 + 1]))
-                            elif i == 2:
-                                self.ax_y[i].append(abs(data[4] - data[6]))
-                            elif i == 3:
-                                self.ax_y[i].append(abs(data[5] - data[7]))
+                            self.ax_y[i].append(measureData[i])
                         else:
                             self.ax_y[i].append(math.nan)
                     self.ax_x.append(self.count)
                     self.count += 1
                 self.measureSeries.append(self.measureSeriesCount)
 
-            except:
+            except Exception as e:
+                print(e)
+                self.supportClass.runningFlag = False
                 if self.notStopped:
                     self.startMeasure()
                     self.timer.stop()
@@ -139,17 +129,11 @@ class MeasureScreen(qt.QWidget):
                     self.settingsComponentCreator.reconnectButton.setVisible(True)
 
     def killThread(self):
-        print(str(self.t) + " 1 ")
-        print(str(self.timer))
         self.t = None
         self.timer = None
 
-    def connectionLostBoxClick(self, buttonPressed):
-        if (buttonPressed.text() == "Ok"):
-            print("Ok")
-            self.connectionLostBox.exec()
-        else:
-            print("Not Ok")
+    def connectionLostBoxClick(self):
+        self.connectionLostBox.exec()
 
     def startMeasure(self):
         if self.t is None:
@@ -173,13 +157,15 @@ class MeasureScreen(qt.QWidget):
         self.timer.start(self.samplerate)
         self.startUpdateLabel()
 
-    def saveClick(self):
-        self.notStopped = False
+    def saveClick(self, wasStopped=False):
+        if self.notStopped:
+            wasStopped = True
+            self.notStopped = False
         df, fig, columnNames = self.createExportData()
         if df is None and fig is None:
-            pass
+            self.saveClick(wasStopped)
         else:
-            self.notStopped = True
+            self.notStopped = wasStopped
             self.exportScreen = export_screen.ExportScreen(df, fig, columnNames)
             self.exportScreen.show()
 
@@ -213,8 +199,9 @@ class MeasureScreen(qt.QWidget):
 
             columnNames = []
 
+            measureSeriesData = list(self.measureSeries)
+
             if self.measureMethod == MeasureMethod.DIODE:
-                measureSeriesData = list(self.measureSeries)
                 dataFrame.insert(0, "Measure Serie", measureSeriesData, True)
                 dataFrame.insert(1, "Id/[mA]", yData[0], True)
                 dataFrame.insert(2, "Ud/[V]", xData, True)
@@ -222,7 +209,9 @@ class MeasureScreen(qt.QWidget):
                 columnNames.append("Id/[mA]")
                 columnNames.append("Ud/[V]")
             elif self.measureMethod == MeasureMethod.OSZILATOR:
-                dataFrame.insert(0, "Sample", xData, True)
+                dataFrame.insert(0, "Measure Serie", measureSeriesData)
+                dataFrame.insert(1, "Sample", xData, True)
+                columnNames.append("Measure Serie")
                 columnNames.append("Sample")
                 for i in range(len(yData)):
                     if self.checkBoxes[i].isChecked():
@@ -238,10 +227,24 @@ class MeasureScreen(qt.QWidget):
             timerCreateExData.start(100)
             return None, None
 
-    def initMessageBox(self):
+    def initReturnMessageBox(self):
         self.messageBox = message_boxes.ReturnMessageBox()
-        self.messageBox.buttonClicked.connect(self.messageBoxButtonClick)
-        self.messageBox.exec_()
+        result = self.messageBox.exec_()
+        if result == qt.QMessageBox.Ok:
+            if self.timer is not None:
+                self.timer.stop()
+
+            if self.timerLabel is not None:
+                self.timerLabel.stop()
+
+            if self.plt.timer is not None:
+                self.plt.timer.stop()
+            if self.measureMethod == MeasureMethod.OSZILATOR:
+                self.returnToMainScreen()
+            elif self.measureMethod == MeasureMethod.DIODE:
+                self.returnToSettingsScreen()
+        else:
+            pass
 
     def startUpdateLabel(self):
         self.timerLabel = qtcore.QTimer(self)

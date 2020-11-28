@@ -1,36 +1,31 @@
-
+import numpy as np
 
 class Calculator:
-    def calcB(self, ic, ib):
-        ib, ic = self.sortArrayByArray(ib, ic)
+    def calcBHelper(self, icVal, ibVal):
         try:
-            bArray = [icVal * 1000 / ibVal for icVal, ibVal in zip(ic, ib[int(len(ib)*0.1):])]
-            bArray = sorted(bArray)
-            return bArray[int(len(bArray) / 2)]
+            return icVal * 1000 / ibVal
         except:
-            print("DIVIDED BY ZERO")
-            return 0
+            return-1
 
-    def sortArrayByArray(self, arrSortedAfter, arr2):
-        arrZip = zip(arrSortedAfter, arr2)
+    def calcB(self, ic, ib):
+        ib, ic = self.sortArraysByArray(ib, ic)
+        bArray = [self.calcBHelper(icVal, ibVal) for icVal, ibVal in zip(ic, ib)]
+        bArray = sorted(bArray)
+        return bArray[int(len(bArray) / 2)]
+
+    def sortArraysByArray(self, arrSortedAfter, arrGetsSorted):
+        arrZip = zip(arrSortedAfter, arrGetsSorted)
         sortedZip = sorted(arrZip)
-        aSAZip, arr2Zip = zip(*sortedZip)
-        return list(aSAZip), list(arr2Zip)
+        arrSortedAfterZip, arrGetsSortedZip = zip(*sortedZip)
+        return list(arrSortedAfterZip), list(arrGetsSortedZip)
 
-    def getBorders(self, aSA, arr2):
-        icMax = max(arr2)
-        indexIcMax = arr2.index(icMax)
-        uceIcMax = aSA[indexIcMax]
-        uceIcLower = uceIcMax * 0.5
+    def getDatarange(self, uce, ic, maxDifference=0.45, minDifference=0.7):
+        icMax = max(ic)
+        indexIcMax = ic.index(icMax)
+        uceIcMax = uce[indexIcMax]
 
-        print("UCICMAX: " + str(uceIcMax) + " INDEX: " + str(indexIcMax))
-        print("UCICMIN: " + str(uceIcLower) + " LEN: " + str(len(aSA)))
-
-        print(uceIcLower - (uceIcLower * 0.1))
-        print(uceIcLower + (uceIcMax - uceIcLower) * 0.4)
-
-        for i in range(len(aSA)):
-            if aSA[i] > uceIcLower - (uceIcLower * 0.1) and aSA[i] < (uceIcLower + (uceIcMax - uceIcLower) * 0.4):
+        for i in range(len(uce)):
+            if uce[i] > uceIcMax * maxDifference and uce[i] < uceIcMax * minDifference:
                 return i, indexIcMax
         return None, None
 
@@ -44,63 +39,63 @@ class Calculator:
     def mulArrays(self, arr1, arr2):
         return [arr1Val * arr2Val for arr1Val, arr2Val in zip(arr1, arr2)]
 
-    def leastSquare(self, arrSortedAfter, arr2, borders=None):
-        arrSortedAfter, arr2 = self.sortArrayByArray(arrSortedAfter, arr2)
+    def leastSquare(self, uceValues, icValues):
+        uceValues, icValues = self.sortArraysByArray(uceValues, icValues)
 
-        if borders is None:
-            lower, upper = self.getBorders(arrSortedAfter, arr2)
-            if upper is None:
-                print("Upper is None, Measure Problem?")
-                return None, None
-            if lower == upper and upper > 0:
-                lower = 0
-        else:
-            try:
-                lower = borders[0]
-                upper = borders[0]
-            except:
-                print("Not Enough Values Passed")
-                return None, None
+        lower, upper = self.getDatarange(uceValues, icValues)
 
         if lower is None or upper is None:
-            print("No Borders found")
-            return None, None
+            print("No Borders found, Maybe Measure Problem?")
+            return "ERROR"
 
-        aSACutted = arrSortedAfter[lower:upper]
-        arr2Cutted = arr2[lower:upper]
+        if lower == upper and upper > 0:
+            lower = 0
 
-        print(aSACutted)
-        print("LOWER: " + str(lower) + " UPPER: " + str(upper))
+        uceValuesCutted = uceValues[lower:upper]
+        icValuesCutted = icValues[lower:upper]
 
-        aSAAverage = self.getAverage(aSACutted)
-        arr2Average = self.getAverage(arr2Cutted)
+        uceValuesAverage = self.getAverage(uceValuesCutted)
+        icValuesAverage = self.getAverage(icValuesCutted)
 
-        aSAAfterSub = self.subAverageFromValues(aSACutted, aSAAverage)
-        arr2AfterSub = self.subAverageFromValues(arr2Cutted, arr2Average)
+        uceValuesAfterSub = self.subAverageFromValues(uceValuesCutted, uceValuesAverage)
+        icValuesAfterSub = self.subAverageFromValues(icValuesCutted, icValuesAverage)
 
-        mulArr = self.mulArrays(aSAAfterSub, arr2AfterSub)
+        uceIcMultipliedValues = self.mulArrays(uceValuesAfterSub, icValuesAfterSub)
 
-        quadASAAfterSub = [val**2 for val in aSAAfterSub]
+        quadUceValuesAfterSub = [val**2 for val in uceValuesAfterSub]
 
-        sumMulArr = sum(mulArr)
-        sumQuadArr = sum(quadASAAfterSub)
+        sumMulArr = sum(uceIcMultipliedValues)
+        sumQuadArr = sum(quadUceValuesAfterSub)
 
         try:
             slope = sumMulArr / sumQuadArr
-        except ZeroDivisionError:
-            print("ERROR SLOPE DIVIDE BY ZERO")
-            slope = "ERROR"
-
-        b = None
-
-        try:
-            b = arr2Average - slope * aSAAverage
-            cutWithX = -b/slope
+            b = icValuesAverage - slope * uceValuesAverage
+            cutWithX = -b / slope
         except ZeroDivisionError:
             print("ERROR SLOPE DIVIDE BY ZERO")
             cutWithX = "ERROR"
-        except TypeError:
-            b = "ERROR"
+        except:
+            print("ERROR")
             cutWithX = "ERROR"
 
-        return cutWithX, b
+        return cutWithX
+
+    def calcNd(self, ud1, id1, ud2, id2, ut):
+        return ((ud2 - ud1) / np.log(id2 / id1)) / ut
+
+    def calcIs(self, ud, id, nd, ut):
+        return np.exp(np.log(id) - ud / (ut * nd))
+
+    def calculateNAndIs(self, ud, id, ut=0.026):
+        udSorted, idSorted = self.sortArraysByArray(ud, id)
+        lower, upper = self.getDatarange(udSorted, idSorted, 0.7, 1)
+        udCutted = udSorted[lower:upper]
+        idCutted = idSorted[lower:upper]
+        nValues = []
+        for i in range(int(len(udCutted) / 2)):
+            nValues.append(self.calcNd(udCutted[i], idCutted[i], udCutted[int(len(udCutted) / 2) + i],
+                                  idCutted[int(len(idCutted) / 2) + i], ut))
+        nValuesSorted = sorted(nValues)
+        index = nValues.index(nValuesSorted[int(len(nValuesSorted) / 2)])
+        isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ud)
+        return nValues[index], isValue
