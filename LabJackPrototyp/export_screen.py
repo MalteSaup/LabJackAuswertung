@@ -28,6 +28,8 @@ class ExportScreen(qt.QMainWindow):
 
         self.setCentralWidget(self.layout)
 
+        self.show()
+
     def saveClick(self):
         if self.layout.chooseDataType.comboBox.currentText() == self.layout.chooseDataType.options[0]:
             self.saveFile("PDF", ".pdf")
@@ -40,10 +42,6 @@ class ExportScreen(qt.QMainWindow):
 
 
     def saveFile(self, datatypeDescription, datatype):
-        try:
-            print("GRÖSSE " + str(self.df.get(self.columnName[0]).size))
-        except Exception as ex:
-            print(ex)
         path_full = qt.QFileDialog.getSaveFileName(self, "Save File", "unnamed", datatypeDescription + " (*"+datatype + ");;Any Files (*.*)")
         path = path_full[0]
         try:
@@ -52,7 +50,6 @@ class ExportScreen(qt.QMainWindow):
                     self.fig.savefig(path)
                 else:
                     self.df = self.dfPacker(self.df)
-                    print(self.df.columns)
                     if datatype == ".csv":
                         self.df.to_csv(r"" + path, index=False)
                     elif datatype == ".xlsx":
@@ -68,26 +65,27 @@ class ExportScreen(qt.QMainWindow):
 
     def dfPacker(self, df):
         x, y = self.dfToXYArr(df)
-        print(y)
+        print(y[1])
         deleteArray = []
         for i in y:
             yTotalEmpty = self.isEmpty(i)
             if not yTotalEmpty:
                 break
         if not yTotalEmpty:
-            for i in range(len(y[0])):
-                delete = True
-                for col in y:
-                    if not math.isnan(col[i]):
-                        delete = False
-                        break
-                if delete:
-                    deleteArray.append(i)
-            for i in range(len(deleteArray) -1, -1, -1):
-                x.pop(deleteArray[i])
-                for col in y:
-                    col.pop(deleteArray[i])
-        #x, y = self.mergeSort(x, y)
+            if len(y) > 1:
+                for i in range(len(y[1])):
+                    delete = True
+                    for col in range(1, len(y)):
+                        print(col, y[col][i])
+                        if not math.isnan(y[col][i]):
+                            delete = False
+                            break
+                    if delete:
+                        deleteArray.append(i)
+                for i in range(len(deleteArray) -1, -1, -1):
+                    x.pop(deleteArray[i])
+                    for col in y:
+                        col.pop(deleteArray[i])
         dataFrame = pd.DataFrame()
         dataFrame.insert(0, self.columnName[0], x, True)
         for i in range(len(y)):
@@ -99,20 +97,17 @@ class ExportScreen(qt.QMainWindow):
 
     def isEmpty(self, arr):
         for i in arr:
-            print(i)
             if type(i) == str or not math.isnan(i):
                 return False
         return True
 
     def dfToXYArr(self, df):
         cols = df.columns
-        print(cols)
         y = []
         for col in cols:
             if col in self.columnName[0]:
                 x = df[col].copy().tolist()
             elif col in self.columnName[1:]:
-                print(col)
                 y.append([])
                 y[-1] = df[col].copy().tolist()
             elif col == "":

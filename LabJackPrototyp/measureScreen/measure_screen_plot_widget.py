@@ -18,10 +18,11 @@ else:
 
 
 class MeasureScreenPlot(qt.QWidget):
-    def __init__(self, axisX, axisY, checkboxes, supportClass, resolutionX=100):
+    def __init__(self, axisX, axisY, measureSeries, checkboxes, supportClass, resolutionX=100):
         super().__init__()
         self.axisX = axisX
         self.axisY = axisY
+        self.measureSeries = measureSeries
         self.checkboxes = checkboxes
         self.canvas = None
         self.ax = None
@@ -40,12 +41,19 @@ class MeasureScreenPlot(qt.QWidget):
 
         self.colors = ["red", "blue", "green", "yellow"]
 
+        self.measureSeriesToDisplay = 0
+
+        self.lines = []
+
         self.initUI()
 
     def initUI(self):
         layout = qt.QHBoxLayout()
         self.canvas = pyqtplt.FigureCanvas(fig.Figure())
         self.ax = self.canvas.figure.subplots()
+
+        self.initAxes()
+        self.getLines()
 
         self.timer = self.canvas.new_timer(150)
         self.timer.add_callback(self.animation)
@@ -102,55 +110,72 @@ class MeasureScreenPlot(qt.QWidget):
                 if not lengthX == len(yData[i]):
                     sameLength = False
         elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+            indexMin, indexMax = 0, -1
+            if self.measureSeriesToDisplay != 0:
+                try:
+                    indexMax = self.measureSeries.index(self.measureSeriesToDisplay + 1) - 1
+                except:
+                    indexMax = -1
+                try:
+                    indexMin = self.measureSeries.index(self.measureSeriesToDisplay)
+                except:
+                    indexMax = -1
+                    indexMin = -1
+
+
             if not lengthX == len(yData[0]):
                 sameLength = False
+
+            xData = xData[indexMin:indexMax]
+            yData[0] = yData[0][indexMin:indexMax]
+
         return sameLength, xData, yData
+
+    def initAxes(self):
+        self.ax.set_xlim(self.createXAxisLimits())
+        self.ax.set_ylim(self.createYAxisLimits())
+
+        if self.measureMethod == MeasureMethod.OSZILATOR:
+            self.ax.text(-0.05, 0.5, "Voltage/[V]", horizontalalignment='right',
+                         verticalalignment='center',
+                         rotation='vertical',
+                         transform=self.ax.transAxes)
+            self.ax.text(0.5, -0.08, "Samplecount", horizontalalignment='center',
+                         verticalalignment='top',
+                         transform=self.ax.transAxes)
+
+        if self.measureMethod == MeasureMethod.DIODE:
+            self.ax.text(-0.05, 0.5, "Id/[mA]", horizontalalignment='right',
+                         verticalalignment='center',
+                         rotation='vertical',
+                         transform=self.ax.transAxes)
+            self.ax.text(0.5, -0.08, "Ud/[V]", horizontalalignment='center',
+                         verticalalignment='top',
+                         transform=self.ax.transAxes)
+
+    def getLines(self):
+        if self.measureMethod == MeasureMethod.DIODE:
+            line, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".")
+            self.lines.append(line)
 
     def animation(self):
         if not self.stopped:
             drawable, xData, yData = self.checkXYLength()
 
-            self.ax.clear()
-
-            self.ax.set_xlim(self.createXAxisLimits())
-            self.ax.set_ylim(self.createYAxisLimits())
-
             if drawable:
-                self.xData = list(xData)
-                self.yData = copy.deepcopy(yData)
-
-
-
-            if self.measureMethod == MeasureMethod.OSZILATOR:
-                for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
-                    if self.checkboxes[i].isChecked():
-                        if len(self.xData) == 0:
-                            self.ax.plot([], [], color=self.colors[i], linestyle="-", marker="None")
+                if self.measureMethod == MeasureMethod.OSZILATOR:
+                    self.ax.clear()
+                    self.xData = xData
+                    self.initAxes()
+                    for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
+                        if self.checkboxes[i].isChecked():
+                            self.ax.plot(xData, yData[i], color=self.colors[i], marker="None", linestyle="-")
                         else:
-                            self.ax.plot(self.xData, self.yData[i], color=self.colors[i], linestyle="-", marker="None")
+                            self.ax.plot([], [], color=self.colors[i], marker="None", linestyle="-")
+                    self.canvas.figure.canvas.draw()
+                elif self.measureMethod == MeasureMethod.DIODE:
+                    self.lines[0].set_xdata(xData)
+                    self.lines[0].set_ydata(yData[0])
 
-                self.ax.text(-0.05, 0.5, "Voltage/[V]", horizontalalignment='right',
-                             verticalalignment='center',
-                             rotation='vertical',
-                             transform=self.ax.transAxes)
-                self.ax.text(0.5, -0.08, "Samplecount", horizontalalignment='center',
-                             verticalalignment='top',
-                             transform=self.ax.transAxes)
-
-            if self.measureMethod == MeasureMethod.DIODE:
-                xMarker, yMarker = self.createLastMeasurePointData(self.xData, self.yData)
-
-                if len(self.xData) == 0:
-                    self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".")
-                else:
-                    self.ax.plot(self.xData, self.yData[0], color=self.colors[3], linestyle="None", marker=".", markersize=1.5)
-                self.ax.plot(xMarker, yMarker[0], color=self.colors[3], linestyle="None", marker="X", markersize=4)
-                self.ax.text(-0.05, 0.5, "Id/[mA]", horizontalalignment='right',
-                             verticalalignment='center',
-                             rotation='vertical',
-                             transform=self.ax.transAxes)
-                self.ax.text(0.5, -0.08, "Ud/[V]", horizontalalignment='center',
-                             verticalalignment='top',
-                             transform=self.ax.transAxes)
-
-            self.canvas.figure.canvas.draw()
+                    self.canvas.draw()
+                    self.canvas.flush_events()

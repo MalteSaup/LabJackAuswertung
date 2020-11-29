@@ -1,3 +1,4 @@
+import math
 
 import PyQt5.QtWidgets as qt
 import PyQt5.QtGui as qtgui
@@ -21,6 +22,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.stopped = False
 
         self.axes = None
+        self.lines = []
         self.fig = None
 
         self.timer = None
@@ -28,6 +30,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.canvas = None
 
         self.b = None
+        self.prevB = None
 
         self.screenGeometry = screenGeometry
 
@@ -41,6 +44,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.ubeMax = ubeMax
         self.ibMax = 250
 
+        self.colors = ["green", "red", "blue", "white"]
         self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
 
         self.measureSeriesToDisplay = 0
@@ -49,15 +53,10 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
     def initUI(self):
         layout = qt.QHBoxLayout()
-
         self.setFixedWidth(self.screenGeometry.width())
 
-
         self.canvas = pyqtplt.FigureCanvas(fig.Figure())
-
         axes = self.canvas.figure.subplots(2, 2, gridspec_kw={"hspace": 0, "wspace": 0})
-        self.timer = self.canvas.new_timer(250)
-        self.timer.add_callback(self.animation)
 
         layout.addWidget(self.canvas)
         (ax1, ax2), (ax3, ax4) = axes
@@ -67,6 +66,14 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
         self.initAxes()
         self.setLayout(layout)
+
+        self.timer = self.canvas.new_timer(150)
+        self.timer.add_callback(self.animation)
+        self.timer.start()
+
+        self.initAxes()
+        self.getLines()
+
 
     def createBData(self):
         bDataIb = []
@@ -80,44 +87,50 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         return [bDataIb, bDataIc]
 
     def animation(self):
-        sameLength, arrUeb = self.checkLength()
+        #print(self.lines)
+        if not self.stopped:
+            sameLength, arrUeb = self.checkLength()
 
-        if sameLength:
-            bData = None
-            if self.measureSeriesToDisplay != 0 and self.b is not None:
-                bData = self.createBData()
+            if sameLength and len(arrUeb[0]) > 0:
 
-            length = len(arrUeb)
-            emptyArr = [None] * length
-            icCross = emptyArr.copy()
-            uceCross = emptyArr.copy()
-            ubeCross = emptyArr.copy()
-            ibCross = emptyArr.copy()
+                bData = None
+                if self.b != self.prevB:
+                    if self.b is None or type(self.b) == str:
+                        bData = [[], []]
+                    else:
+                        bData = self.createBData()
+                    self.prevB = self.b
+                    print(bData)
 
-            icCross[-1] = arrUeb[0][-1]
-            uceCross[-1] = arrUeb[1][-1]
-            ubeCross[-1] = arrUeb[2][-1]
-            ibCross[-1] = arrUeb[3][-1]
+                length = len(arrUeb)
+                emptyArr = [math.nan] * length
+                icCross = emptyArr.copy()
+                uceCross = emptyArr.copy()
+                ubeCross = emptyArr.copy()
+                ibCross = emptyArr.copy()
 
-            for ax in self.axes:
-                ax.clear()
-            self.initAxes()
-            self.axes[0].plot(arrUeb[3], arrUeb[0], color="green", linestyle="None", marker=".", markersize=1)
-            self.axes[1].plot(arrUeb[1], arrUeb[0], color="red", linestyle="None", marker=".", markersize=1)
-            self.axes[2].plot(arrUeb[3], arrUeb[2], color="blue", linestyle="None", marker=".", markersize=1)
+                icCross[-1] = arrUeb[0][-1]
+                uceCross[-1] = arrUeb[1][-1]
+                ubeCross[-1] = arrUeb[2][-1]
+                ibCross[-1] = arrUeb[3][-1]
 
-            self.axes[0].plot(ibCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
-            self.axes[1].plot(uceCross, icCross, color="yellow", linestyle="None", marker="X", markersize=4)
-            self.axes[2].plot(ibCross, ubeCross, color="yellow", linestyle="None", marker="X", markersize=4)
+                for i in range(3):
+                    self.lines[i][0].set_xdata(arrUeb[3])
+                    self.lines[i][0].set_ydata(arrUeb[0])
 
-            self.axes[3].plot(ibCross, ibCross, color="white", linestyle="None", marker="None", markersize=0, label=self.now)
-            self.axes[3].legend()
+                    self.lines[i][1].set_xdata(ibCross)
+                    self.lines[i][1].set_ydata(icCross)
 
-            if bData is not None:
-                self.axes[0].plot(bData[0], bData[1], color="white", linestyle="-", marker="None")
+                self.lines[3][0].set_xdata(ibCross)
+                self.lines[3][0].set_ydata(icCross)
+
+                if bData is not None:
+                    self.lines[3][1].set_xdata(bData[0])
+                    self.lines[3][1].set_ydata(bData[1])
 
 
-        self.canvas.figure.canvas.draw()
+                self.canvas.draw()
+                self.canvas.flush_events()
 
     def initAxes(self):
         self.axes[0].spines["top"].set_color("none")
@@ -166,11 +179,19 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[3].text(1.25, 1, "Uce/[V]", horizontalalignment='right', verticalalignment='center',
                           transform=self.axes[3].transAxes)
 
+    def getLines(self):
+        for i in range(3):
+            linePlt, = self.axes[i].plot([], [], color=self.colors[i], linestyle="None", marker=".", markersize=1)
+            lineCross, = self.axes[i].plot([], [], color="yellow", linestyle="None", marker="X", markersize=4)
+            self.lines.append([linePlt, lineCross])
+        linePlt, = self.axes[3].plot([], [], color="white", linestyle="None", marker="None")
+        lineB, = self.axes[0].plot([], [], color="white", linestyle="-", marker="None")
+        self.lines.append([linePlt, lineB])
+
     def updateLabel(self):
         self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
 
     def checkLength(self):
-
         arr_ueb = copy.deepcopy(self.measureData)
 
         length = len(arr_ueb[0])
@@ -183,28 +204,18 @@ class TransistorMeasureScreenWidget(qt.QWidget):
 
         if self.measureSeriesToDisplay == 0:
             return sameLength, arr_ueb
-        if self.measureSeriesToDisplay == 1:
-            try:
-                indexMax = self.measureSeriesForMeasureData.index(2)
-                for i in range(len(arr_ueb)):
-                    arr_ueb[i] = arr_ueb[i][:indexMax]
-            except:
-                print("Only one measure serie")
-        elif self.measureSeriesToDisplay == self.measureSeriesForMeasureData[-1]:
-            indexMin = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
-            for i in range(len(arr_ueb)):
-                arr_ueb[i] = arr_ueb[i][indexMin:]
         else:
-            indexMin = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
             try:
-                indexMax = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 1)
+                upper = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 1)
             except:
-                try:
-                    indexMax = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 2)
-                except:
-                    print("Neither the next nor the second next has any values, I take the last Value of array for you")
-                    indexMax = -1
+                upper = -1
+            try:
+                lower = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
+            except:
+                upper = -1
+                lower = -1
 
-            for i in range(len(arr_ueb)):
-                arr_ueb[i] = arr_ueb[i][indexMin:indexMax]
-        return sameLength, arr_ueb
+            arrCutted = [arr[lower:upper] for arr in arr_ueb]
+
+
+            return sameLength, arrCutted

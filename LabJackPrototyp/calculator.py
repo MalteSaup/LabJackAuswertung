@@ -81,21 +81,26 @@ class Calculator:
         return cutWithX
 
     def calcNd(self, ud1, id1, ud2, id2, ut):
+        if np.log(id2 / id1) == 0:
+            raise Exception("Division through Zero")
         return ((ud2 - ud1) / np.log(id2 / id1)) / ut
 
     def calcIs(self, ud, id, nd, ut):
         return np.exp(np.log(id) - ud / (ut * nd))
 
     def calculateNAndIs(self, ud, id, ut=0.026):
-        udSorted, idSorted = self.sortArraysByArray(ud, id)
-        lower, upper = self.getDatarange(udSorted, idSorted, 0.7, 1)
-        udCutted = udSorted[lower:upper]
-        idCutted = idSorted[lower:upper]
-        nValues = []
-        for i in range(int(len(udCutted) / 2)):
-            nValues.append(self.calcNd(udCutted[i], idCutted[i], udCutted[int(len(udCutted) / 2) + i],
-                                  idCutted[int(len(idCutted) / 2) + i], ut))
-        nValuesSorted = sorted(nValues)
-        index = nValues.index(nValuesSorted[int(len(nValuesSorted) / 2)])
-        isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ud)
-        return nValues[index], isValue
+        try:
+            udSorted, idSorted = self.sortArraysByArray(ud, id)
+            lower, upper = self.getDatarange(udSorted, idSorted, 0.7, 1)
+            udCutted = udSorted[lower:upper]
+            idCutted = idSorted[lower:upper]
+            nValues = []
+            for i in range(int(len(udCutted) / 2)):
+                nValues.append(self.calcNd(udCutted[i], idCutted[i], udCutted[int(len(udCutted) / 2) + i],
+                                      idCutted[int(len(idCutted) / 2) + i], ut))
+            nValuesSorted = sorted(nValues)
+            index = nValues.index(nValuesSorted[int(len(nValuesSorted) / 2)])
+            isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ud)
+            return nValues[index], isValue
+        except:
+            return "ERROR", "ERROR"
