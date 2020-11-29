@@ -98,7 +98,7 @@ class MeasureScreen(qt.QWidget):
 
     def addMeasureSerie(self):
         self.measureSeriesCount += 1
-        self.settingsComponentCreator.measureSeriesLabel.setText("Measure Points: " + str(self.measureSeriesCount))
+        self.settingsComponentCreator.measureSeriesLabel.setText("Measure Series: " + str(self.measureSeriesCount))
 
     def updateDataset(self):
         if self.notStopped:

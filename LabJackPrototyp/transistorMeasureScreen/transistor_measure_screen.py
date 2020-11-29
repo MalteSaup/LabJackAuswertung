@@ -179,7 +179,7 @@ class TransistorScreen(qt.QWidget):
     def addMeasureSeries(self):
         if self.notStopped:
             self.measureSeriesCount += 1
-            self.settingsComponentCreator.measureSeriesLabel.setText(str(self.measureSeriesCount))
+            self.settingsComponentCreator.measureSeriesLabel.setText("Measure Series: " + str(self.measureSeriesCount))
             self.resizeWidgets()
 
     def addCalcResults(self, measureSeries, amount, b, uearly):

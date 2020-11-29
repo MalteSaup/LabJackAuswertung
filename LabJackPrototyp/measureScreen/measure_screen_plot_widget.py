@@ -155,7 +155,7 @@ class MeasureScreenPlot(qt.QWidget):
 
     def getLines(self):
         if self.measureMethod == MeasureMethod.DIODE:
-            line, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".")
+            line, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".", markersize=1)
             self.lines.append(line)
 
     def animation(self):
