@@ -52,7 +52,6 @@ class MeasureScreen(qt.QWidget):
         self.mAtoA = 1000
         self.uAtoV = 1e6
 
-        self.minWidthWidget = 220
         self.pltPadding = 30
         self.widgetAmount = 1
 
@@ -86,7 +85,7 @@ class MeasureScreen(qt.QWidget):
         self.layout.addWidget(self.calcWidget, 0, 1)
         self.layout.addWidget(self.plt, 0, 2)
 
-        settingsWidget.setFixedWidth(self.minWidthWidget)
+        settingsWidget.setFixedWidth(self.supportClass.minWidthWidget)
 
         self.setLayout(self.layout)
 
@@ -164,7 +163,7 @@ class MeasureScreen(qt.QWidget):
             self.calcWidget = CalcWidget(self.measureSeriesCount)
             self.calcWidget.chooseDropDown.currentIndexChanged.connect(self.comboChangeEvent)
             self.calcWidget.calcButton.pressed.connect(self.calcClick)
-            self.calcWidget.setFixedWidth(self.minWidthWidget)
+            self.calcWidget.setFixedWidth(self.supportClass.minWidthWidget)
             self.layout.addWidget(self.calcWidget, 0, 1)
             self.widgetAmount = 2
 
@@ -383,5 +382,5 @@ class MeasureScreen(qt.QWidget):
         width = self.geometry().width()
         height = self.geometry().height() - self.supportClass.container.statusBar().height()
         if self.plt is not None:
-            self.plt.canvas.setGeometry(0, 0, (width - self.minWidthWidget * self.widgetAmount) - self.pltPadding,
+            self.plt.canvas.setGeometry(0, 0, (width - self.supportClass.minWidthWidget * self.widgetAmount) - self.pltPadding,
                                         height)

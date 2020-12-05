@@ -25,5 +25,5 @@ class MeasureSettings:
     def toString(self):
         return "R1: " + str(self.r1) + " R2: " + str(self.r2) + " UBE Max: " + str(
             self.ubeMax) + " UCE Max: " + str(self.uceMax) + " Measure Ports: " + str(
-            self.measurePorts) + " idPort: " + str(self.idPort) + " udMax: " + str(self.udMax) + " idMax: " + str(
+            self.measurePorts) + " idPort: " + str(self.idPort) + " udPort: " + str(self.udPort) + " udMax: " + str(self.udMax) + " idMax: " + str(
             self.idMax) + " measureMethod: " + str(self.measureMethod)

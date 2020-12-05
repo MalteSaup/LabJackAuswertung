@@ -8,7 +8,8 @@ class MainScreen(qt.QWidget):
         self.comboBox = None
         self.supportClass = supportClass
         self.startMeasureButton = None
-
+        self.picture = None
+        self.pictureLabel = None
         self.options = [
             "Voltage Measurement",
             "Diode Measurement",
@@ -20,10 +21,13 @@ class MainScreen(qt.QWidget):
         layout = qt.QHBoxLayout()
         self.supportClass.currentScreen = self
 
-        pictureLabel = qt.QLabel()
-        picture = qtgui.QPixmap("Dioden_Messschaltung.png")
-        picture = picture.scaled(780, 440)
-        pictureLabel.setPixmap(picture)
+        self.pictureLabel = qt.QLabel()
+        self.picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        self.picture = self.picture.scaledToWidth(780)
+        self.picture = self.picture.scaledToHeight(440)
+
+        self.pictureLabel.setPixmap(self.picture)
+        self.pictureLabel.setMinimumSize(1, 1)
 
         buttonLayout = qt.QVBoxLayout()
 
@@ -42,6 +46,11 @@ class MainScreen(qt.QWidget):
         buttonLayout.addWidget(self.comboBox)
         buttonLayout.addWidget(exitButton)
 
+        buttonWidget = qt.QWidget()
+        buttonWidget.setLayout(buttonLayout)
+
+        buttonWidget.setFixedWidth(self.supportClass.minWidthWidget)
+
         connectButton.pressed.connect(self.connectDevice)
         self.startMeasureButton.clicked.connect(self.supportClass.startMeasure)
         exitButton.clicked.connect(qtcore.QCoreApplication.instance().quit)
@@ -49,8 +58,8 @@ class MainScreen(qt.QWidget):
         if not self.supportClass.runningFlag:
             self.startMeasureButton.setEnabled(False)
 
-        layout.addLayout(buttonLayout)
-        layout.addWidget(pictureLabel)
+        layout.addWidget(buttonWidget)
+        layout.addWidget(self.pictureLabel)
 
         self.setLayout(layout)
         self.show()
@@ -64,3 +73,13 @@ class MainScreen(qt.QWidget):
             self.changeStatusBar("Connection State: Connected")
         else:
             self.changeStatusBar("Connection State: Connection Error")
+
+    def resizeEvent(self, a0: qtgui.QResizeEvent):
+        super().resizeEvent(a0)
+        width = self.geometry().width() - self.supportClass.minWidthWidget
+        height = self.geometry().height() - self.supportClass.container.statusBar().height()
+        self.picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        self.picture = self.picture.scaled(width, height)
+        self.pictureLabel.setPixmap(self.picture)
+
+

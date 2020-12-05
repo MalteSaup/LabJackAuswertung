@@ -75,7 +75,7 @@ class CalcResultWidget(qt.QGroupBox):
         layout = qt.QVBoxLayout()
 
         measureSeriesLabel = qt.QLabel("Measure Serie: " + str(self.measureSeries))
-        amountLabel = qt.QLabel("Amount of Measurements: " + str(self.amount))
+        amountLabel = qt.QLabel("Measurements: " + str(self.amount))
 
         value1Label, value2Label = None, None
 

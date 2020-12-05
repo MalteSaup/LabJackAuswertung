@@ -19,10 +19,9 @@ import message_boxes
 import calc_result
 from settings_component_creator import SettingsComponentCreator
 
-from calc_result import CalcResult
 from calc_widget import CalcResultWidget, CalcWidget
 
-from helper import LabJackU6Settings, MeasureMethod
+from helper import MeasureMethod
 
 if qtplt.is_pyqt5():
     pass
@@ -68,7 +67,6 @@ class TransistorScreen(qt.QWidget):
         self.milli = 1000
         self.mikro = 1e6
 
-        self.minWidthWidget = 220
         self.pltPadding = 30
 
         self.notStopped = False
@@ -89,7 +87,7 @@ class TransistorScreen(qt.QWidget):
         self.sampleratePerSecond = 25
         self.samplerate = int(1000/self.sampleratePerSecond)
 
-        self.settingsComponentCreator = SettingsComponentCreator(minWidthWidget=self.minWidthWidget,
+        self.settingsComponentCreator = SettingsComponentCreator(minWidthWidget=self.supportClass.minWidthWidget,
                                                                  padding=self.pltPadding)
 
     def initUI(self):
@@ -121,7 +119,7 @@ class TransistorScreen(qt.QWidget):
         self.setLayout(self.layout)
 
 
-        settingsWidget.setFixedWidth(self.minWidthWidget)
+        settingsWidget.setFixedWidth(self.supportClass.minWidthWidget)
         settingsWidget.setContentsMargins(0, 0, 10, 0)
         self.show()
 
@@ -225,7 +223,7 @@ class TransistorScreen(qt.QWidget):
         self.calcWidget = CalcWidget(self.measureSeriesCount)
         self.calcWidget.chooseDropDown.currentIndexChanged.connect(self.comboChangeEvent)
         self.calcWidget.calcButton.pressed.connect(self.calcClick)
-        self.calcWidget.setFixedWidth(self.minWidthWidget)
+        self.calcWidget.setFixedWidth(self.supportClass.minWidthWidget)
         self.layout.addWidget(self.calcWidget, 0, 1)
         self.widgetAmount = 2
 
@@ -402,5 +400,5 @@ class TransistorScreen(qt.QWidget):
         height = self.geometry().height() - self.supportClass.container.statusBar().height()
         if self.transistorPlot is not None:
             self.transistorPlot.canvas.setGeometry(0, 0,
-                                                   (width - self.minWidthWidget * self.widgetAmount) - self.pltPadding,
+                                                   (width - self.supportClass.minWidthWidget * self.widgetAmount) - self.pltPadding,
                                                    height)
