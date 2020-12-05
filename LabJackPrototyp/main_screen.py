@@ -8,7 +8,6 @@ class MainScreen(qt.QWidget):
         self.comboBox = None
         self.supportClass = supportClass
         self.startMeasureButton = None
-        self.picture = None
         self.pictureLabel = None
         self.options = [
             "Voltage Measurement",
@@ -22,11 +21,11 @@ class MainScreen(qt.QWidget):
         self.supportClass.currentScreen = self
 
         self.pictureLabel = qt.QLabel()
-        self.picture = qtgui.QPixmap("Dioden_Messschaltung.png")
-        self.picture = self.picture.scaledToWidth(780)
-        self.picture = self.picture.scaledToHeight(440)
+        picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        picture = picture.scaledToWidth(780)
+        picture = picture.scaledToHeight(440)
 
-        self.pictureLabel.setPixmap(self.picture)
+        self.pictureLabel.setPixmap(picture)
         self.pictureLabel.setMinimumSize(1, 1)
 
         buttonLayout = qt.QVBoxLayout()
@@ -78,8 +77,8 @@ class MainScreen(qt.QWidget):
         super().resizeEvent(a0)
         width = self.geometry().width() - self.supportClass.minWidthWidget
         height = self.geometry().height() - self.supportClass.container.statusBar().height()
-        self.picture = qtgui.QPixmap("Dioden_Messschaltung.png")
-        self.picture = self.picture.scaled(width, height)
-        self.pictureLabel.setPixmap(self.picture)
+        picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        picture = picture.scaled(width, height)
+        self.pictureLabel.setPixmap(picture)
 
 
