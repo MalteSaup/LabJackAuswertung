@@ -6,6 +6,8 @@ import math
 
 import copy
 
+from datetime import datetime
+
 import matplotlib.backends.qt_compat as qtplt
 import matplotlib.figure as fig
 
@@ -27,12 +29,7 @@ class MeasureScreenPlot(qt.QWidget):
         self.canvas = None
         self.ax = None
 
-        self.xData = []
-        self.yData = []
-
         self.resolutionX = resolutionX
-
-        self.measureMethod = supportClass.measureSettings.measureMethod
 
         self.supportClass = supportClass
 
@@ -42,6 +39,8 @@ class MeasureScreenPlot(qt.QWidget):
         self.colors = ["red", "blue", "green", "yellow"]
 
         self.measureSeriesToDisplay = 0
+
+        self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
 
         self.lines = []
 
@@ -63,32 +62,33 @@ class MeasureScreenPlot(qt.QWidget):
 
         self.setLayout(layout)
 
-    def createLastMeasurePointData(self, xData, yData):
-        if len(xData) == 0:
+    def createLastMeasurePointData(self):
+        if len(self.axisX) == 0:
+            print("?")
             return [math.nan], [[math.nan], [math.nan], [math.nan], [math.nan]]
-        xMeasurePoint = [math.nan] * len(xData)
-        xMeasurePoint[-1] = xData[-1]
+        xMeasurePoint = [math.nan] * len(self.axisX)
+        xMeasurePoint[-1] = self.axisX[-1]
         yMeasurePoints = []
 
-        emptyArr = [math.nan] * len(yData[0])
+        emptyArr = [math.nan] * len(self.axisY[0])
 
         if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
-            for i in range(len(yData)):
+            for i in range(len(self.axisY)):
                 yMeasurePoints.append(emptyArr.copy())
-                yMeasurePoints[i][-1] = yData[i][-1]
+                yMeasurePoints[i][-1] = self.axisY[i][-1]
         elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
             yMeasurePoints.append(emptyArr.copy())
-            yMeasurePoints[0][-1] = yData[0][-1]
+            yMeasurePoints[0][-1] = self.axisY[0][-1]
         return xMeasurePoint, yMeasurePoints
 
     def createXAxisLimits(self):
-        if self.measureMethod == MeasureMethod.OSZILATOR:
-            if self.xData == [] or self.xData[-1] < self.resolutionX:
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
+            if self.axisX == [] or self.axisX[-1] < self.resolutionX:
                 return [0, self.resolutionX]
             else:
-                return [self.xData[-1] - self.resolutionX, self.xData[-1]]
+                return [self.axisX[-1] - self.resolutionX, self.axisX[-1]]
 
-        elif self.measureMethod == MeasureMethod.DIODE:
+        elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
             return [0, self.supportClass.measureSettings.udMax]
 
     def createYAxisLimits(self):
@@ -135,7 +135,7 @@ class MeasureScreenPlot(qt.QWidget):
         self.ax.set_xlim(self.createXAxisLimits())
         self.ax.set_ylim(self.createYAxisLimits())
 
-        if self.measureMethod == MeasureMethod.OSZILATOR:
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
             self.ax.text(-0.05, 0.5, "Voltage/[V]", horizontalalignment='right',
                          verticalalignment='center',
                          rotation='vertical',
@@ -144,7 +144,7 @@ class MeasureScreenPlot(qt.QWidget):
                          verticalalignment='top',
                          transform=self.ax.transAxes)
 
-        if self.measureMethod == MeasureMethod.DIODE:
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
             self.ax.text(-0.05, 0.5, "Id/[mA]", horizontalalignment='right',
                          verticalalignment='center',
                          rotation='vertical',
@@ -154,18 +154,19 @@ class MeasureScreenPlot(qt.QWidget):
                          transform=self.ax.transAxes)
 
     def getLines(self):
-        if self.measureMethod == MeasureMethod.DIODE:
-            line, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".", markersize=1)
-            self.lines.append(line)
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+            line1, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".", markersize=1)
+            line2, = self.ax.plot([], [], color=self.colors[1], linestyle="None", marker=".", markersize=3)
+            self.lines.append(line1)
+            self.lines.append(line2)
 
     def animation(self):
         if not self.stopped:
             drawable, xData, yData = self.checkXYLength()
 
             if drawable:
-                if self.measureMethod == MeasureMethod.OSZILATOR:
+                if self.supportClass.measureSettings.measureMethod == MeasureMethod.OSZILATOR:
                     self.ax.clear()
-                    self.xData = xData
                     self.initAxes()
                     for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
                         if self.checkboxes[i].isChecked():
@@ -173,9 +174,13 @@ class MeasureScreenPlot(qt.QWidget):
                         else:
                             self.ax.plot([], [], color=self.colors[i], marker="None", linestyle="-")
                     self.canvas.figure.canvas.draw()
-                elif self.measureMethod == MeasureMethod.DIODE:
+                elif self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+                    lastPointX, lastPointY = self.createLastMeasurePointData()
                     self.lines[0].set_xdata(xData)
                     self.lines[0].set_ydata(yData[0])
+                    self.lines[1].set_xdata(lastPointX)
+                    self.lines[1].set_ydata(lastPointY)
+                    print(lastPointY[0][-1])
 
                     self.canvas.draw()
                     self.canvas.flush_events()

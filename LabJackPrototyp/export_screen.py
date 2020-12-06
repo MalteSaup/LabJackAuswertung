@@ -119,9 +119,9 @@ class LayoutCompiler(qt.QWidget):
         super().__init__()
         self.chooseDataType = None
         self.buttonHolder = None
-        self.showUI()
+        self.initUI()
 
-    def showUI(self):
+    def initUI(self):
         layout = qt.QVBoxLayout()
         self.setLayout(layout)
 
@@ -141,9 +141,9 @@ class ChooseDataType(qt.QWidget):
         ]
         self.comboBox = None
 
-        self.showUI()
+        self.initUI()
 
-    def showUI(self):
+    def initUI(self):
         layout = qt.QHBoxLayout()
         self.setLayout(layout)
         label = qt.QLabel("Choose Datatype: ")

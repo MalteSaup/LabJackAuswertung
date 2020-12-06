@@ -29,17 +29,7 @@ class Calculator:
                 return i, indexIcMax
         return None, None
 
-    def getAverage(self, arr):
-        return sum(arr) / len(arr)
-
-    def subAverageFromValues(self, arr, average):
-        arrCopy = arr.copy()
-        return [value - average for value in arrCopy]
-
-    def mulArrays(self, arr1, arr2):
-        return [arr1Val * arr2Val for arr1Val, arr2Val in zip(arr1, arr2)]
-
-    def leastSquare(self, uceValues, icValues):
+    def calcUearly(self, uceValues, icValues):
         uceValues, icValues = self.sortArraysByArray(uceValues, icValues)
 
         lower, upper = self.getDatarange(uceValues, icValues)
@@ -54,22 +44,11 @@ class Calculator:
         uceValuesCutted = uceValues[lower:upper]
         icValuesCutted = icValues[lower:upper]
 
-        uceValuesAverage = self.getAverage(uceValuesCutted)
-        icValuesAverage = self.getAverage(icValuesCutted)
-
-        uceValuesAfterSub = self.subAverageFromValues(uceValuesCutted, uceValuesAverage)
-        icValuesAfterSub = self.subAverageFromValues(icValuesCutted, icValuesAverage)
-
-        uceIcMultipliedValues = self.mulArrays(uceValuesAfterSub, icValuesAfterSub)
-
-        quadUceValuesAfterSub = [val**2 for val in uceValuesAfterSub]
-
-        sumMulArr = sum(uceIcMultipliedValues)
-        sumQuadArr = sum(quadUceValuesAfterSub)
+        uceNpArr = np.vstack([np.array(uceValuesCutted, np.ones(len(uceValuesCutted)))]).T
+        icNpArr = np.array(icValuesCutted)
 
         try:
-            slope = sumMulArr / sumQuadArr
-            b = icValuesAverage - slope * uceValuesAverage
+            slope, b = np.linalg.lstsq(uceNpArr, icNpArr, rcond=None)[0]
             cutWithX = -b / slope
         except ZeroDivisionError:
             print("ERROR SLOPE DIVIDE BY ZERO")

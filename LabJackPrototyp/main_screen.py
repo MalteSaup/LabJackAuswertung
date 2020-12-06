@@ -9,14 +9,14 @@ class MainScreen(qt.QWidget):
         self.supportClass = supportClass
         self.startMeasureButton = None
         self.pictureLabel = None
-        self.options = [
+
+
+    def initUI(self):
+        options = [
             "Voltage Measurement",
             "Diode Measurement",
             "Transitor Measurement"
         ]
-
-
-    def initUI(self):
         layout = qt.QHBoxLayout()
         self.supportClass.currentScreen = self
 
@@ -32,7 +32,7 @@ class MainScreen(qt.QWidget):
 
         # DropDown
         self.comboBox = qt.QComboBox()
-        for option in self.options:
+        for option in options:
             self.comboBox.addItem(option)
 
         connectButton = qt.QPushButton("Connect to Device")
@@ -63,8 +63,8 @@ class MainScreen(qt.QWidget):
         self.setLayout(layout)
         self.show()
 
-    def changeStatusBar(self, string):
-        self.supportClass.statusBar.showMessage(string)
+    def changeStatusBar(self, newStatus):
+        self.supportClass.statusBar.showMessage(newStatus)
 
     def connectDevice(self):
         if(self.supportClass.connectDevice()):

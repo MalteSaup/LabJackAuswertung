@@ -23,7 +23,7 @@ class SaveErrorPermissionDeniedBox(qt.QMessageBox):
         self.setWindowTitle("HAW LabJack")
         self.setStandardButtons(qt.QMessageBox.Ok)
 
-class SomethingWentWrong(qt.QMessageBox):
+class SomethingWentWrongBox(qt.QMessageBox):
     def __init__(self):
         super().__init__()
         self.showUi()
@@ -34,10 +34,9 @@ class SomethingWentWrong(qt.QMessageBox):
         self.setWindowTitle("HAW LabJack")
         self.setStandardButtons(qt.QMessageBox.Ok)
 
-class ConnectionLost(qt.QMessageBox):
+class ConnectionLostBox(qt.QMessageBox):
     def __init__(self):
         super().__init__()
-        self.t = False
         self.showUi()
 
     def showUi(self):

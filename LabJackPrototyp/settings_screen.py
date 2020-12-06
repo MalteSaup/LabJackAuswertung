@@ -20,7 +20,6 @@ class SettingsScreen(qt.QWidget):
         super().__init__()
 
         self.supportClass = supportClass
-        self.centralWidget = None
         self.measureMethod = supportClass.measureSettings.measureMethod
 
         self.comboBoxes = []
@@ -34,8 +33,6 @@ class SettingsScreen(qt.QWidget):
 
         self.submitButton = None
         self.returnButton = None
-
-        self.error = None
 
         self.layout = None
 
@@ -145,9 +142,6 @@ class SettingsScreen(qt.QWidget):
             self.comboBoxes[1].setCurrentIndex(measureSettings.measurePorts[0]+1)
             self.comboBoxes[2].setCurrentIndex(measureSettings.measurePorts[1]+1)
             self.comboBoxes[3].setCurrentIndex(measureSettings.measurePorts[2]+1)
-
-    def closeEvent(self, closeEvent):
-        closeEvent.accept()
 
     def validateInputs(self):
         if self.layout.count() > 1:

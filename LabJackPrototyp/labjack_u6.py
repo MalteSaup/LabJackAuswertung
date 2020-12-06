@@ -45,8 +45,11 @@ class LabJackU6:
                 self.supportClass.runningFlag = False
                 self.runningFlag = False
                 self.supportClass.statusBar.showMessage("Connection State: Connection Lost")
-                if self.supportClass.inMainScreen:
-                    self.supportClass.currentScreen.startMeasureButton.setEnabled(False)
+                try:
+                    if self.supportClass.inMainScreen:
+                        self.supportClass.currentScreen.startMeasureButton.setEnabled(False)
+                except Exception as e:
+                    print(e)
 
     def getMeasureData(self):
         currentMeasureData = self.labJackU6.readRegister(0, LabJackU6Settings.MINCHANNELREAD.value)

@@ -8,12 +8,10 @@ import main_screen
 import support_class
 
 
-class Fenster(qt.QMainWindow):
+class MainWindow(qt.QMainWindow):
     def __init__(self):
         super().__init__()
         self.initUI()
-        self.supportClass = None
-        self.inMeasureScreen = False
 
     def initUI(self):
         options = [
@@ -37,12 +35,9 @@ class Fenster(qt.QMainWindow):
         self.file = self.menu.addMenu("&File")
         self.file.addAction(self.saveAction)
 
-        self.supportClass = support_class.SupportClass(self.statusBar(), self, options, screenGeometry)
+        supportClass = support_class.SupportClass(self.statusBar(), self, options, screenGeometry)
 
-        mainScreen = main_screen.MainScreen(self.supportClass)
-        mainScreen.initUI()
-
-        self.setCentralWidget(mainScreen)
+        supportClass.returnToMainScreen()
 
         self.setMinimumWidth(570)
 
@@ -58,6 +53,6 @@ qt.QApplication.setAttribute(qtcore.Qt.AA_EnableHighDpiScaling)
 app = qt.QApplication([])
 screenGeometry = app.desktop().screenGeometry()                                                                         #reads resolution of screen
 screenGeometry.setWidth(screenGeometry.width() * len(app.screens()))                                                    #multiplies width resolution of screen with amount of connected screens
-w = Fenster()
+w = MainWindow()
 
 os._exit(app.exec_())

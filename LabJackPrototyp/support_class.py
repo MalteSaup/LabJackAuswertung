@@ -10,7 +10,6 @@ from labjack_u6 import LabJackU6
 class SupportClass:
     def __init__(self, statusBar, container, options, screenGeometry):
 
-        self.device = None
         self.runningFlag = False
         self.statusBar = statusBar
         self.inMainScreen = True
@@ -69,7 +68,8 @@ class SupportClass:
         self.container.replaceCentralWidget(ms)
         self.inMeasureScreen = False
         self.inMainScreen = True
-        self.labJackU6.checkConnectionThread()
+        if self.labJackU6 is not None:
+            self.labJackU6.checkConnectionThread()
         try:
             ms.initUI()
         except Exception as e:

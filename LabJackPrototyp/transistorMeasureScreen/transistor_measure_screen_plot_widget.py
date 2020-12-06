@@ -35,7 +35,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.screenGeometry = screenGeometry
 
         self.measureData = measureData
-        self.measureSeriesForMeasureData = measureSeriesForMeasureData
+        self.measureSeries = measureSeriesForMeasureData
         self.uceTick = uceTick
         self.ubeTick = ubeTick
         self.uceTickLabel = uceTickLabel
@@ -87,7 +87,6 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         return [bDataIb, bDataIc]
 
     def animation(self):
-        #print(self.lines)
         if not self.stopped:
             sameLength, arrUeb = self.checkLength()
 
@@ -206,11 +205,11 @@ class TransistorMeasureScreenWidget(qt.QWidget):
             return sameLength, arr_ueb
         else:
             try:
-                upper = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay + 1)
+                upper = self.measureSeries.index(self.measureSeriesToDisplay + 1)
             except:
                 upper = -1
             try:
-                lower = self.measureSeriesForMeasureData.index(self.measureSeriesToDisplay)
+                lower = self.measureSeries.index(self.measureSeriesToDisplay)
             except:
                 upper = -1
                 lower = -1
