@@ -88,9 +88,9 @@ class CalcResultWidget(qt.QGroupBox):
         elif (self.measureMethode == MeasureMethod.DIODE):
             value1Label = qt.QLabel("Nd: " + str(self.value1))
             if type(self.value2) == str:
-                value2Label = qt.QLabel("UEarly: " + self.value1)
+                value2Label = qt.QLabel("Is: " + self.value1)
             else:
-                value2Label = qt.QLabel("UEarly: " + str(self.value1) + "A")
+                value2Label = qt.QLabel("Is: " + str(self.value1) + "A")
 
         layout.addWidget(measureSeriesLabel)
         layout.addWidget(amountLabel)

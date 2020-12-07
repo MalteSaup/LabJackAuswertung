@@ -13,7 +13,7 @@ from transistorMeasureScreen import transistor_measure_screen_plot_widget as tms
 import message_boxes
 import calc_result
 
-from calc_widget import CalcResultWidget, CalcWidget
+from calc_widget import CalcResultWidget
 
 from helper import MeasureMethod
 
