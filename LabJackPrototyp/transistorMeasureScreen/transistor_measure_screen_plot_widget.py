@@ -93,6 +93,7 @@ class TransistorMeasureScreenWidget(qt.QWidget):
             if sameLength and len(arrUeb[0]) > 0:
 
                 bData = None
+                print(self.b, self.prevB)
                 if self.b != self.prevB:
                     if self.b is None or type(self.b) == str:
                         bData = [[], []]
@@ -113,15 +114,23 @@ class TransistorMeasureScreenWidget(qt.QWidget):
                 ubeCross[-1] = arrUeb[2][-1]
                 ibCross[-1] = arrUeb[3][-1]
 
-                for i in range(3):
-                    self.lines[i][0].set_xdata(arrUeb[3])
-                    self.lines[i][0].set_ydata(arrUeb[0])
+                self.lines[0][0].set_xdata(arrUeb[3])
+                self.lines[0][0].set_ydata(arrUeb[0])
 
-                    self.lines[i][1].set_xdata(ibCross)
-                    self.lines[i][1].set_ydata(icCross)
+                self.lines[1][0].set_xdata(arrUeb[1])
+                self.lines[1][0].set_ydata(arrUeb[0])
 
-                self.lines[3][0].set_xdata(ibCross)
-                self.lines[3][0].set_ydata(icCross)
+                self.lines[2][0].set_xdata(arrUeb[3])
+                self.lines[2][0].set_ydata(arrUeb[2])
+
+                self.lines[0][1].set_xdata(ibCross)
+                self.lines[0][1].set_ydata(icCross)
+
+                self.lines[1][1].set_xdata(uceCross)
+                self.lines[1][1].set_ydata(icCross)
+
+                self.lines[2][1].set_xdata(ibCross)
+                self.lines[2][1].set_ydata(ubeCross)
 
                 if bData is not None:
                     self.lines[3][1].set_xdata(bData[0])

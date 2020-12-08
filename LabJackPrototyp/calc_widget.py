@@ -63,8 +63,14 @@ class CalcResultHolder(qt.QWidget):
 class CalcResultWidget(qt.QGroupBox):
     def __init__(self, measureSeries, value1, value2, amount, measureMethode):
         super().__init__()
-        self.value1 = value1
-        self.value2 = value2
+        if type(value1) == str:
+            self.value1 = value1
+        else:
+            self.value1 = float('{:0.2e}'.format(value1))
+        if type(value2) == str:
+            self.value2 = value2
+        else:
+            self.value2 = float('{:0.2e}'.format(value2))
         self.measureSeries = measureSeries
         self.amount = amount
         self.measureMethode = measureMethode
@@ -88,9 +94,9 @@ class CalcResultWidget(qt.QGroupBox):
         elif (self.measureMethode == MeasureMethod.DIODE):
             value1Label = qt.QLabel("Nd: " + str(self.value1))
             if type(self.value2) == str:
-                value2Label = qt.QLabel("Is: " + self.value1)
+                value2Label = qt.QLabel("Is: " + self.value2)
             else:
-                value2Label = qt.QLabel("Is: " + str(self.value1) + "A")
+                value2Label = qt.QLabel("Is: " + str(self.value2) + "A")
 
         layout.addWidget(measureSeriesLabel)
         layout.addWidget(amountLabel)

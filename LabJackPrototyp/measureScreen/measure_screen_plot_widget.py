@@ -64,7 +64,6 @@ class MeasureScreenPlot(qt.QWidget):
 
     def createLastMeasurePointData(self):
         if len(self.axisX) == 0:
-            print("?")
             return [math.nan], [[math.nan], [math.nan], [math.nan], [math.nan]]
         xMeasurePoint = [math.nan] * len(self.axisX)
         xMeasurePoint[-1] = self.axisX[-1]
@@ -156,7 +155,7 @@ class MeasureScreenPlot(qt.QWidget):
     def getLines(self):
         if self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
             line1, = self.ax.plot([], [], color=self.colors[3], linestyle="None", marker=".", markersize=1)
-            line2, = self.ax.plot([], [], color=self.colors[1], linestyle="None", marker=".", markersize=3)
+            line2, = self.ax.plot([], [], color="white", linestyle="None", marker="X", markersize=4)
             self.lines.append(line1)
             self.lines.append(line2)
 
@@ -180,7 +179,6 @@ class MeasureScreenPlot(qt.QWidget):
                     self.lines[0].set_ydata(yData[0])
                     self.lines[1].set_xdata(lastPointX)
                     self.lines[1].set_ydata(lastPointY)
-                    print(lastPointY[0][-1])
 
                     self.canvas.draw()
                     self.canvas.flush_events()
