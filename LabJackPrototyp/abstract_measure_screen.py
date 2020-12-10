@@ -90,6 +90,8 @@ class AbstractMeasureScreen(qt.QWidget):
             self.calcWidget = None
         self.widgetAmount = 1
 
+        self.calcResults= []
+
         qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
 
         self.plt.measureSeriesToDisplay = 0

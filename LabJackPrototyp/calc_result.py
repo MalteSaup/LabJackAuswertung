@@ -4,3 +4,4 @@ class CalcResult:
         self.value2 = value2
         self.measurePointCount = measurePointCount
         self.measureSerie = measureSerie
+        print(self.value1, self.value2)

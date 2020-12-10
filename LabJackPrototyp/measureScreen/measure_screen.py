@@ -104,7 +104,7 @@ class MeasureScreen(AbstractMeasureScreen):
     def calcMeasureSeries(self, ud, id, measureSeries=-1, lower=0):
         upper = -1
         if lower == -1:                     #Flag for All Values
-            n, iS = self.calculator.calculateNAndIs(ud, id)
+            nd, iS = self.calculator.calculateNAndIs(ud, id)
             measureText = "All Values"
             lower = 0                       #All Values are counted for measurement Amount
         else:

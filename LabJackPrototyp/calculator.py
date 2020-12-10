@@ -19,20 +19,20 @@ class Calculator:
         arrSortedAfterZip, arrGetsSortedZip = zip(*sortedZip)
         return list(arrSortedAfterZip), list(arrGetsSortedZip)
 
-    def getDatarange(self, uce, ic, maxDifference=0.45, minDifference=0.7):
-        icMax = max(ic)
-        indexIcMax = ic.index(icMax)
-        uceIcMax = uce[indexIcMax]
+    def getDatarange(self, array1, array2, maxDifference=0.45, minDifference=0.7):
+        array2Max = max(array2)
+        indexArray2Max = array2.index(array2Max)
+        array1Array2Max = array1[indexArray2Max]
 
-        for i in range(len(uce)):
-            if uce[i] > uceIcMax * maxDifference and uce[i] < uceIcMax * minDifference:
-                return i, indexIcMax
+        for i in range(len(array2)):
+            if array1[i] > array1Array2Max * maxDifference and array1[i] < array1Array2Max * minDifference:
+                return i, indexArray2Max
         return None, None
 
     def calcUearly(self, uceValues, icValues):
-        uceValues, icValues = self.sortArraysByArray(uceValues, icValues)
+        uceValuesSorted, icValuesSorted = self.sortArraysByArray(uceValues, icValues)
 
-        lower, upper = self.getDatarange(uceValues, icValues)
+        lower, upper = self.getDatarange(uceValuesSorted, icValuesSorted)
 
         if lower is None or upper is None:
             print("No Borders found, Maybe Measure Problem?")
@@ -41,10 +41,10 @@ class Calculator:
         if lower == upper and upper > 0:
             lower = 0
 
-        uceValuesCutted = uceValues[lower:upper]
-        icValuesCutted = icValues[lower:upper]
+        uceValuesCutted = uceValuesSorted[lower:upper]
+        icValuesCutted = icValuesSorted[lower:upper]
 
-        uceNpArr = np.vstack([np.array(uceValuesCutted, np.ones(len(uceValuesCutted)))]).T
+        uceNpArr = np.vstack([np.array(uceValuesCutted), np.ones(len(uceValuesCutted))]).T
         icNpArr = np.array(icValuesCutted)
 
         try:
@@ -65,6 +65,8 @@ class Calculator:
         return ((ud2 - ud1) / np.log(id2 / id1)) / ut
 
     def calcIs(self, ud, id, nd, ut):
+        print(ud, id)
+        print(nd, ut)
         return np.exp(np.log(id) - ud / (ut * nd))
 
     def calculateNAndIs(self, ud, id, ut=0.026):
@@ -79,7 +81,8 @@ class Calculator:
                                       idCutted[int(len(idCutted) / 2) + i], ut))
             nValuesSorted = sorted(nValues)
             index = nValues.index(nValuesSorted[int(len(nValuesSorted) / 2)])
-            isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ud)
+            isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ut)
             return nValues[index], isValue
-        except:
+        except Exception as ex:
+            print(ex)
             return "ERROR", "ERROR"

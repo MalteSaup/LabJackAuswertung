@@ -123,7 +123,7 @@ class TransistorScreen(AbstractMeasureScreen):
                     self.connectionLostBox.exec_()
                     self.settingsComponentCreator.reconnectButton.setVisible(True)
 
-    def addCalcResults(self, measureSeries, amount, b, uearly):
+    def addCalcResults(self, measureSeries, amount, uearly, b):
         if not self.doesResultExist(measureSeries):
             self.calcResults.append(calc_result.CalcResult(measureSeries, uearly, b, amount))
             resultWidget = CalcResultWidget(measureSeries, uearly, b, amount, MeasureMethod.TRANSISTOR)
@@ -156,25 +156,29 @@ class TransistorScreen(AbstractMeasureScreen):
         else:
             self.calcMeasureSeries(uce, ic, ib, measureSeries-1)
 
-    def calcMeasureSeries(self, uce, ic, ib, measureSeries=0, lower=0):
+    def calcMeasureSeries(self, uce, ic, ib, measureSeries=0, lower=0, displayB=True):
         upper = -1
         if lower == -1:
             uearly = self.calculator.calcUearly(uce, ic)
             b = self.calculator.calcB(ic, ib)
             lower = 0
         else:
+            print(measureSeries)
+            print(self.measureSeries)
+            print(lower)
             try:
                 upper = self.measureSeries.index(measureSeries + 1)
             except:
                 upper = -1
             if measureSeries != 1:
+                print("?!?")
                 try:
                     lower = self.measureSeries.index(measureSeries)
                 except:
                     lower = -1
                     upper = -1
 
-
+            print(lower, upper)
             if lower == -1 and upper == -1:
                 uearly = "ERROR"
                 b = "ERROR"
@@ -186,12 +190,11 @@ class TransistorScreen(AbstractMeasureScreen):
             measureText = "All Values"
         else:
             measureText = str(measureSeries)
-
         self.addCalcResults(measureText, len(uce[lower:upper]), uearly, b)
 
     def calcAll(self, uce, ic, ib):
         for i in range(self.measureSeriesCount):
-            self.calcMeasureSeries(uce, ic, ib, i+1)
+            self.calcMeasureSeries(uce, ic, ib, i+1, False)
 
     def createExportData(self):
         if self.plt.checkLength()[0]:
