@@ -1,15 +1,12 @@
 import math
 
 import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as qtgui
-import PyQt5.QtCore as qtcore
 
 import copy
 from datetime import datetime
 
 import matplotlib.backends.qt_compat as qtplt
 import matplotlib.figure as fig
-import matplotlib.pyplot as plt
 
 if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt

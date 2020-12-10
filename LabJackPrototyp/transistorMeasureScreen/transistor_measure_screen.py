@@ -163,22 +163,16 @@ class TransistorScreen(AbstractMeasureScreen):
             b = self.calculator.calcB(ic, ib)
             lower = 0
         else:
-            print(measureSeries)
-            print(self.measureSeries)
-            print(lower)
             try:
                 upper = self.measureSeries.index(measureSeries + 1)
             except:
                 upper = -1
             if measureSeries != 1:
-                print("?!?")
                 try:
                     lower = self.measureSeries.index(measureSeries)
                 except:
                     lower = -1
                     upper = -1
-
-            print(lower, upper)
             if lower == -1 and upper == -1:
                 uearly = "ERROR"
                 b = "ERROR"

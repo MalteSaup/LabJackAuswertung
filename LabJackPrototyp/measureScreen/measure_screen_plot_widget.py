@@ -1,6 +1,4 @@
 import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as qtgui
-import PyQt5.QtCore as qtcore
 
 import math
 

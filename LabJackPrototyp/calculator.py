@@ -5,7 +5,7 @@ class Calculator:
         try:
             return icVal * 1000 / ibVal
         except:
-            return-1
+            return -1
 
     def calcB(self, ic, ib):
         ib, ic = self.sortArraysByArray(ib, ic)
@@ -65,8 +65,6 @@ class Calculator:
         return ((ud2 - ud1) / np.log(id2 / id1)) / ut
 
     def calcIs(self, ud, id, nd, ut):
-        print(ud, id)
-        print(nd, ut)
         return np.exp(np.log(id) - ud / (ut * nd))
 
     def calculateNAndIs(self, ud, id, ut=0.026):
@@ -78,7 +76,7 @@ class Calculator:
             nValues = []
             for i in range(int(len(udCutted) / 2)):
                 nValues.append(self.calcNd(udCutted[i], idCutted[i], udCutted[int(len(udCutted) / 2) + i],
-                                      idCutted[int(len(idCutted) / 2) + i], ut))
+                                           idCutted[int(len(idCutted) / 2) + i], ut))
             nValuesSorted = sorted(nValues)
             index = nValues.index(nValuesSorted[int(len(nValuesSorted) / 2)])
             isValue = self.calcIs(udCutted[index], idCutted[index], nValues[index], ut)

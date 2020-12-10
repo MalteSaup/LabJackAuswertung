@@ -1,11 +1,5 @@
-import os
-
 import PyQt5.QtWidgets as qt
-import PyQt5.QtGui as qtgui
 import PyQt5.QtCore as qtcore
-
-import main_screen
-import support_class
 
 from calculator import Calculator
 from settings_component_creator import SettingsComponentCreator
