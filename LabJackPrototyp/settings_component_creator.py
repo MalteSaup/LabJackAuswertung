@@ -89,9 +89,20 @@ class SettingsComponentCreator:
 
         elif measureMethod == MeasureMethod.TRANSISTOR:
             for i in range(LabJackU6Settings.USABLEPORTCOUNT.value):
+                print(i)
                 self.channelData.append([qt.QLabel("-"), qt.QLabel("-")])
-                groupBox = self.createGroupBox(options[measurePorts[0] + 1], "IC",
-                                               "IC * R2", self.channelData[-1])
+                if measurePorts.index(i) == 0:
+                    groupBox = self.createGroupBox(options[i + 1], "IC * R2/[V]",
+                                                   "IC/[mA]", self.channelData[-1])
+                elif measurePorts.index(i) == 1:
+                    groupBox = self.createGroupBox(options[i + 1], "UCE/[V]",
+                                                   "UCE/[V]", self.channelData[-1])
+                elif measurePorts.index(i) == 2:
+                    groupBox = self.createGroupBox(options[i + 1], "UBE/[V]",
+                                                   "UBE/[V]", self.channelData[-1])
+                else:
+                    groupBox = self.createGroupBox(options[i + 1], "IB * R1/[V]",
+                                                   "IB/[μA]", self.channelData[-1])
                 layout.addWidget(groupBox, i, 0, 1, 2)
 
         layout.addWidget(self.measureSeriesLabel, LabJackU6Settings.USABLEPORTCOUNT.value + 1, 0, 1, 2)

@@ -10,6 +10,13 @@ class MainScreen(qt.QWidget):
         self.startMeasureButton = None
         self.pictureLabel = None
 
+        self.images = [
+            "./images/hawLogo.jpg",
+            "./images/DiodenAufbau.png",
+            "./images/TransistorAufbau.png"
+        ]
+        self.currentImage = 0
+
 
     def initUI(self):
         options = [
@@ -17,11 +24,12 @@ class MainScreen(qt.QWidget):
             "Diode Measurement",
             "Transitor Measurement"
         ]
+
         layout = qt.QHBoxLayout()
         self.supportClass.currentScreen = self
 
         self.pictureLabel = qt.QLabel()
-        picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        picture = qtgui.QPixmap(self.images[self.currentImage])
         picture = picture.scaledToWidth(780)
         picture = picture.scaledToHeight(440)
 
@@ -34,7 +42,7 @@ class MainScreen(qt.QWidget):
         self.comboBox = qt.QComboBox()
         for option in options:
             self.comboBox.addItem(option)
-
+        self.comboBox.currentIndexChanged.connect(self.comboChangeEvent)
         connectButton = qt.QPushButton("Connect to Device")
         self.startMeasureButton = qt.QPushButton("Go to Measurement")
 
@@ -75,10 +83,15 @@ class MainScreen(qt.QWidget):
 
     def resizeEvent(self, a0: qtgui.QResizeEvent):
         super().resizeEvent(a0)
+        self.resizeWidgets()
+
+    def resizeWidgets(self):
         width = self.geometry().width() - self.supportClass.minWidthWidget
         height = self.geometry().height() - self.supportClass.container.statusBar().height()
-        picture = qtgui.QPixmap("Dioden_Messschaltung.png")
+        picture = qtgui.QPixmap(self.images[self.currentImage])
         picture = picture.scaled(width, height)
         self.pictureLabel.setPixmap(picture)
 
-
+    def comboChangeEvent(self):
+        self.currentImage = self.comboBox.currentIndex()
+        self.resizeWidgets()

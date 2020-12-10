@@ -64,7 +64,6 @@ class MeasureScreenPlot(qt.QWidget):
 
     def createLastMeasurePointData(self):
         if len(self.axisX) == 0:
-            print("?")
             return [math.nan], [[math.nan], [math.nan], [math.nan], [math.nan]]
         xMeasurePoint = [math.nan] * len(self.axisX)
         xMeasurePoint[-1] = self.axisX[-1]
@@ -180,7 +179,6 @@ class MeasureScreenPlot(qt.QWidget):
                     self.lines[0].set_ydata(yData[0])
                     self.lines[1].set_xdata(lastPointX)
                     self.lines[1].set_ydata(lastPointY)
-                    print(lastPointY[0][-1])
 
                     self.canvas.draw()
                     self.canvas.flush_events()

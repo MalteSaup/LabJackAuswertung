@@ -10,13 +10,16 @@ from datetime import datetime
 import matplotlib.backends.qt_compat as qtplt
 import matplotlib.figure as fig
 import matplotlib.pyplot as plt
+
 if qtplt.is_pyqt5():
     import matplotlib.backends.backend_qt5agg as pyqtplt
 else:
     import matplotlib.backends.backend_qt4agg as pyqtplt
 
+
 class TransistorMeasureScreenWidget(qt.QWidget):
-    def __init__(self, measureData, measureSeriesForMeasureData, uceMax, ubeMax, uceTick, uceTickLabel, ubeTick, ubeTickLabel, screenGeometry):
+    def __init__(self, measureData, measureSeriesForMeasureData, uceMax, ubeMax, uceTick, uceTickLabel, ubeTick,
+                 ubeTickLabel, screenGeometry):
         super().__init__()
 
         self.stopped = False
@@ -74,7 +77,6 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.initAxes()
         self.getLines()
 
-
     def createBData(self):
         bDataIb = []
         bDataIc = []
@@ -99,8 +101,6 @@ class TransistorMeasureScreenWidget(qt.QWidget):
                     else:
                         bData = self.createBData()
                     self.prevB = self.b
-                    print(bData)
-
                 length = len(arrUeb)
                 emptyArr = [math.nan] * length
                 icCross = emptyArr.copy()
@@ -127,7 +127,6 @@ class TransistorMeasureScreenWidget(qt.QWidget):
                     self.lines[3][1].set_xdata(bData[0])
                     self.lines[3][1].set_ydata(bData[1])
 
-
                 self.canvas.draw()
                 self.canvas.flush_events()
 
@@ -147,7 +146,8 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[1].set_xlim(0, 12)
         self.axes[1].set_ylim(0, 40)
         self.axes[1].get_xaxis().set_visible(False)
-        self.axes[1].text(0, 1.1, "Ic/[mA]", horizontalalignment='center', verticalalignment='center', transform=self.axes[1].transAxes)
+        self.axes[1].text(0, 1.1, "Ic/[mA]", horizontalalignment='center', verticalalignment='center',
+                          transform=self.axes[1].transAxes)
 
         self.axes[2].spines["bottom"].set_color("none")
         self.axes[2].spines["left"].set_color("none")
@@ -160,8 +160,10 @@ class TransistorMeasureScreenWidget(qt.QWidget):
         self.axes[2].invert_xaxis()
         self.axes[2].invert_yaxis()
         self.axes[2].xaxis.tick_top()
-        self.axes[2].text(-0.05, 1, "Ib/[μA]", horizontalalignment='right', verticalalignment='center', transform=self.axes[2].transAxes)
-        self.axes[2].text(1, -0.1, "Ube/[V]", horizontalalignment='center', verticalalignment='center', transform=self.axes[2].transAxes)
+        self.axes[2].text(-0.05, 1, "Ib/[μA]", horizontalalignment='right', verticalalignment='center',
+                          transform=self.axes[2].transAxes)
+        self.axes[2].text(1, -0.1, "Ube/[V]", horizontalalignment='center', verticalalignment='center',
+                          transform=self.axes[2].transAxes)
 
         self.axes[3].spines["right"].set_color("none")
         self.axes[3].spines["bottom"].set_color("none")
@@ -215,6 +217,5 @@ class TransistorMeasureScreenWidget(qt.QWidget):
                 lower = -1
 
             arrCutted = [arr[lower:upper] for arr in arr_ueb]
-
 
             return sameLength, arrCutted

@@ -22,7 +22,7 @@ class MainWindow(qt.QMainWindow):
         ]
 
         self.setWindowTitle("HAW LabJack")
-        self.setWindowIcon(qtgui.QIcon("icon.ico"))
+        self.setWindowIcon(qtgui.QIcon("./images/icon.ico"))
         self.statusBar().showMessage("Connection State: Not Connected")
 
         self.menu = self.menuBar()

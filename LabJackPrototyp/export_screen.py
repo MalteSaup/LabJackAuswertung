@@ -16,18 +16,20 @@ class ExportScreen(qt.QMainWindow):
         self.layout = None
         self.errorBox = None
         self.columnName = columnName
-        self.showUI()
+        self.initUI()
 
-    def showUI(self):
+    def initUI(self):
+        print("INITITITI")
         self.layout = LayoutCompiler()
 
-        self.layout.buttonHolder.cancelButton.pressed.connect(lambda: self.close)
+        self.layout.buttonHolder.cancelButton.pressed.connect(lambda: self.close())
         self.layout.buttonHolder.saveButton.pressed.connect(self.saveClick)
 
         self.setWindowModality(qtcore.Qt.ApplicationModal)  #Makes underlying window unclickable
 
         self.setCentralWidget(self.layout)
-
+        self.setWindowIcon(qtgui.QIcon("./images/icon.ico"))
+        self.setWindowTitle("Export Data")
         self.show()
 
     def saveClick(self):
@@ -65,7 +67,6 @@ class ExportScreen(qt.QMainWindow):
 
     def dfPacker(self, df):
         x, y = self.dfToXYArr(df)
-        print(y[1])
         deleteArray = []
         for i in y:
             yTotalEmpty = self.isEmpty(i)
@@ -76,7 +77,6 @@ class ExportScreen(qt.QMainWindow):
                 for i in range(len(y[1])):
                     delete = True
                     for col in range(1, len(y)):
-                        print(col, y[col][i])
                         if not math.isnan(y[col][i]):
                             delete = False
                             break
