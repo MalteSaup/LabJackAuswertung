@@ -73,6 +73,9 @@ class AbstractMeasureScreen(qt.QWidget):
             self.layout.addWidget(self.calcWidget, 0, 1)
             self.widgetAmount = 2
 
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.TRANSISTOR or self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+            self.plt.updateLabel()
+
         qtcore.QTimer.singleShot(100, lambda: self.resizeWidgets())
 
     def startMeasure(self):
@@ -127,6 +130,8 @@ class AbstractMeasureScreen(qt.QWidget):
         return False
 
     def saveClick(self, wasStopped=False):
+        if self.supportClass.measureSettings.measureMethod == MeasureMethod.TRANSISTOR or self.supportClass.measureSettings.measureMethod == MeasureMethod.DIODE:
+            self.plt.updateLabel()
         if self.notStopped:
             wasStopped = True
             self.notStopped = False

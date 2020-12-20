@@ -191,12 +191,14 @@ class TransistorMeasureScreenWidget(qt.QWidget):
             linePlt, = self.axes[i].plot([], [], color=self.colors[i], linestyle="None", marker=".", markersize=1)
             lineCross, = self.axes[i].plot([], [], color="yellow", linestyle="None", marker="X", markersize=4)
             self.lines.append([linePlt, lineCross])
-        linePlt, = self.axes[3].plot([], [], color="white", linestyle="None", marker="None")
+        linePlt, = self.axes[3].plot([], [], color="white", linestyle="None", marker="None", label=str(self.now))
+        self.axes[3].legend()
         lineB, = self.axes[0].plot([], [], color="white", linestyle="-", marker="None")
         self.lines.append([linePlt, lineB])
 
     def updateLabel(self):
         self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
+        self.axes[3].legend([str(self.now)])
 
     def checkLength(self):
         arr_ueb = copy.deepcopy(self.measureData)
