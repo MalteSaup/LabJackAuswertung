@@ -92,7 +92,6 @@ class TransistorMeasureScreenWidget(qt.QWidget):
             if sameLength and len(arrUeb[0]) > 0:
 
                 bData = None
-                print(self.b, self.prevB)
                 if self.b != self.prevB:
                     if self.b is None or type(self.b) == str:
                         bData = [[], []]

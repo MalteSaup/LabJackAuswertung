@@ -42,6 +42,8 @@ class MeasureScreenPlot(qt.QWidget):
 
         self.lines = []
 
+        self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
+
         self.initUI()
 
     def initUI(self):
@@ -156,6 +158,7 @@ class MeasureScreenPlot(qt.QWidget):
             line2, = self.ax.plot([], [], color="white", linestyle="None", marker="X", markersize=4)
             self.lines.append(line1)
             self.lines.append(line2)
+            self.ax.legend([self.now])
 
     def animation(self):
         if not self.stopped:
@@ -180,3 +183,7 @@ class MeasureScreenPlot(qt.QWidget):
 
                     self.canvas.draw()
                     self.canvas.flush_events()
+
+    def updateLabel(self):
+        self.now = datetime.now().strftime('%Y.%m.%d %H:%M')
+        self.ax.legend([str(self.now)])

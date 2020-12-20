@@ -19,7 +19,6 @@ class ExportScreen(qt.QMainWindow):
         self.initUI()
 
     def initUI(self):
-        print("INITITITI")
         self.layout = LayoutCompiler()
 
         self.layout.buttonHolder.cancelButton.pressed.connect(lambda: self.close())
@@ -30,7 +29,6 @@ class ExportScreen(qt.QMainWindow):
         self.setCentralWidget(self.layout)
         self.setWindowIcon(qtgui.QIcon("./images/icon.ico"))
         self.setWindowTitle("Export Data")
-        self.show()
 
     def saveClick(self):
         if self.layout.chooseDataType.comboBox.currentText() == self.layout.chooseDataType.options[0]:
